@@ -1,0 +1,71 @@
+# TOOLPATH = ../z_tools/
+# MAKE     = $(TOOLPATH)make.exe -r
+# NASK     = $(TOOLPATH)nask.exe
+# EDIMG    = $(TOOLPATH)edimg.exe
+# IMGTOL   = $(TOOLPATH)imgtol.com
+# COPY     = copy
+# DEL      = del
+
+# # デフォルト動作
+
+# default :
+# 	$(MAKE) img
+
+# # ファイル生成規則
+
+# ipl10.bin : ipl10.nas Makefile
+# 	$(NASK) ipl10.nas ipl10.bin ipl10.lst
+
+# haribote.sys : haribote.nas Makefile
+# 	$(NASK) haribote.nas haribote.sys haribote.lst
+
+# haribote.img : ipl10.bin haribote.sys Makefile
+# 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
+# 		wbinimg src:ipl10.bin len:512 from:0 to:0 \
+# 		copy from:haribote.sys to:@: \
+# 		imgout:haribote.img
+
+# # コマンド
+
+# img :
+# 	$(MAKE) haribote.img
+
+# run :
+# 	$(MAKE) img
+# 	$(COPY) haribote.img ..\z_tools\qemu\fdimage0.bin
+# 	$(MAKE) -C ../z_tools/qemu
+
+# install :
+# 	$(MAKE) img
+# 	$(IMGTOL) w a: haribote.img
+
+# clean :
+# 	-$(DEL) ipl10.bin
+# 	-$(DEL) ipl10.lst
+# 	-$(DEL) haribote.sys
+# 	-$(DEL) haribote.lst
+
+# src_only :
+# 	$(MAKE) clean
+# 	-$(DEL) haribote.img
+
+ipl.asm : ipl.nas Makefile
+	type ipl.nas > ipl.asm
+
+haribote.asm : haribote.nas Makefile
+	type haribote.nas > haribote.asm
+
+ipl.bin : ipl.asm Makefile
+	nasm -f bin ipl.asm -o ipl.bin -l ipl.lst
+
+tail.bin : tail.asm Makefile
+	nasm -f bin tail.asm -o tail.bin -l tail.lst
+
+HariboteOS.img : ipl.bin tail.bin Makefile
+	type tail.bin > hariboteOS.img
+
+asm :
+	make -r ipl.bin
+
+img :
+	make -r tail.bin

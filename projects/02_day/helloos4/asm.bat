@@ -1,0 +1,1 @@
+nasm -f bin ipl.asm -o ipl.bin -l ipl.bin
