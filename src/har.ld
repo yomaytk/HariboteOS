@@ -3,15 +3,15 @@ OUTPUT_FORMAT("binary");
 SECTIONS
 {
     .head 0x0 : {
-        LONG(64 * 1024)  /*  0 : stack+.data+heap ã®å¤§ãã•ï¼ˆ4KBã®å€æ•°ï¼‰ */
-        LONG(0x69726148)      /*  4 : ã‚·ã‚°ãƒãƒãƒ£ "Hari" */
-        LONG(0)               /*  8 : mmarea ã®å¤§ãã•ï¼ˆ4KBã®å€æ•°ï¼‰ */
-        LONG(0x310000)        /* 12 : ã‚¹ã‚¿ãƒƒã‚¯åˆæœŸå€¤ï¼†.dataè»¢é€å…ˆ */
-        LONG(SIZEOF(.data))   /* 16 : .dataã‚µã‚¤ã‚º */
-        LONG(LOADADDR(.data)) /* 20 : .dataã®åˆæœŸå€¤åˆ—ã®ãƒ•ã‚¡ã‚¤ãƒ«ä½ç½® */
+        LONG(64 * 1024)  /*  0 : stack+.data+heap ‚Ì‘å‚«‚³i4KB‚Ì”{”j */
+        LONG(0x69726148)      /*  4 : ƒVƒOƒlƒ`ƒƒ "Hari" */
+        LONG(0)               /*  8 : mmarea ‚Ì‘å‚«‚³i4KB‚Ì”{”j */
+        LONG(0x310000)        /* 12 : ƒXƒ^ƒbƒN‰Šú’l•.data“]‘—æ */
+        LONG(SIZEOF(.data))   /* 16 : .dataƒTƒCƒY */
+        LONG(LOADADDR(.data)) /* 20 : .data‚Ì‰Šú’l—ñ‚Ìƒtƒ@ƒCƒ‹ˆÊ’u */
         LONG(0xE9000000)      /* 24 : 0xE9000000 */
-        LONG(HariMain - 0x20) /* 28 : ã‚¨ãƒ³ãƒˆãƒªã‚¢ãƒ‰ãƒ¬ã‚¹ - 0x20 */
-        LONG(0)               /* 32 : heapé ˜åŸŸï¼ˆmallocé ˜åŸŸï¼‰é–‹å§‹ã‚¢ãƒ‰ãƒ¬ã‚¹ */
+        LONG(HariMain - 0x20) /* 28 : ƒGƒ“ƒgƒŠƒAƒhƒŒƒX - 0x20 */
+        LONG(0)               /* 32 : heap—Ìˆæimalloc—ÌˆæjŠJnƒAƒhƒŒƒX */
     }
 
     .text : { *(.text) }
