@@ -1,12 +1,20 @@
+#include<stdio.h>
+#include<stdarg.h>
+
 extern void io_hlt(void);
 extern void io_cli(void);
 extern void io_out8(int port, int data);
 extern int io_load_eflags(void);
 extern void io_store_eflags(int eflags);
+extern char hankaku[4096];
 
 void init_palette(void);
 void set_palette(int start, int end, unsigned char *rgb);
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
+void init_screen(char *vram, int x, int y);
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
+void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
+void sprint(int count, char *ss, char *s, ...);
 
 #define COL8_000000		0
 #define COL8_FF0000		1
@@ -25,29 +33,25 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 #define COL8_008484		14
 #define COL8_848484		15
 
+struct BOOTINFO {
+	char cyls, leds, vmode, reserve;
+	short scrnx, scrny;
+	char *vram;
+};
+
 void HariMain(void)
 {
-	init_palette();
-	char *vram = (char *) 0xa0000;
-	int xsize = 320;
-	int ysize = 200;
+	struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
+	char s[40];
 
-	boxfill8(vram, xsize, COL8_008484,  0,         0,          xsize -  1, ysize - 29);
-	boxfill8(vram, xsize, COL8_C6C6C6,  0,         ysize - 28, xsize -  1, ysize - 28);
-	boxfill8(vram, xsize, COL8_FFFFFF,  0,         ysize - 27, xsize -  1, ysize - 27);
-	boxfill8(vram, xsize, COL8_C6C6C6,  0,         ysize - 26, xsize -  1, ysize -  1);
+	init_palette();		//カラーパレット設定
+	init_screen(binfo->vram, binfo->scrnx, binfo->scrny);	//スクリーン初期化
 
-	boxfill8(vram, xsize, COL8_FFFFFF,  3,         ysize - 24, 59,         ysize - 24);
-	boxfill8(vram, xsize, COL8_FFFFFF,  2,         ysize - 24,  2,         ysize -  4);
-	boxfill8(vram, xsize, COL8_848484,  3,         ysize -  4, 59,         ysize -  4);
-	boxfill8(vram, xsize, COL8_848484, 59,         ysize - 23, 59,         ysize -  5);
-	boxfill8(vram, xsize, COL8_000000,  2,         ysize -  3, 59,         ysize -  3);
-	boxfill8(vram, xsize, COL8_000000, 60,         ysize - 24, 60,         ysize -  3);
-
-	boxfill8(vram, xsize, COL8_848484, xsize - 47, ysize - 24, xsize -  4, ysize - 24);
-	boxfill8(vram, xsize, COL8_848484, xsize - 47, ysize - 23, xsize - 47, ysize -  4);
-	boxfill8(vram, xsize, COL8_FFFFFF, xsize - 47, ysize -  3, xsize -  4, ysize -  3);
-	boxfill8(vram, xsize, COL8_FFFFFF, xsize -  3, ysize - 24, xsize -  3, ysize -  3);
+	putfonts8_asc(binfo->vram, binfo->scrnx,  8, 8, COL8_FFFFFF, "ABC 123");
+	putfonts8_asc(binfo->vram, binfo->scrnx, 31, 31, COL8_000000, "Haribote OS.");
+	putfonts8_asc(binfo->vram, binfo->scrnx, 30, 30, COL8_FFFFFF, "Haribote OS.");
+	sprint(1, s, "scrnx = %d", 40003);
+	putfonts8_asc(binfo->vram, binfo->scrnx, 16, 64, COL8_FFFFFF, s);
 
 	for (;;) {
 		io_hlt();
@@ -82,10 +86,11 @@ void init_palette(void)
 
 void set_palette(int start, int end, unsigned char *rgb)
 {
-	int eflags = io_load_eflags();	/* 割り込み許可フラグの値を記録する */
+	int i, eflags;
+	eflags = io_load_eflags();	/* 割り込み許可フラグの値を記録する */
 	io_cli(); 					/* 許可フラグを0にして割り込み禁止にする */
 	io_out8(0x03c8, start);
-	for (int i = start; i <= end; i++) {
+	for (i = start; i <= end; i++) {
 		io_out8(0x03c9, rgb[0] / 4);
 		io_out8(0x03c9, rgb[1] / 4);
 		io_out8(0x03c9, rgb[2] / 4);
@@ -97,9 +102,105 @@ void set_palette(int start, int end, unsigned char *rgb)
 
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1)
 {
-	for (int y = y0; y <= y1; y++) {
-		for (int x = x0; x <= x1; x++)
+	int x, y;
+	for (y = y0; y <= y1; y++) {
+		for (x = x0; x <= x1; x++)
 			vram[y * xsize + x] = c;
 	}
 	return;
+}
+
+void init_screen(char *vram, int x, int y)
+{
+	boxfill8(vram, x, COL8_008484,  0,     0,      x -  1, y - 29);
+	boxfill8(vram, x, COL8_C6C6C6,  0,     y - 28, x -  1, y - 28);
+	boxfill8(vram, x, COL8_FFFFFF,  0,     y - 27, x -  1, y - 27);
+	boxfill8(vram, x, COL8_C6C6C6,  0,     y - 26, x -  1, y -  1);
+
+	boxfill8(vram, x, COL8_FFFFFF,  3,     y - 24, 59,     y - 24);
+	boxfill8(vram, x, COL8_FFFFFF,  2,     y - 24,  2,     y -  4);
+	boxfill8(vram, x, COL8_848484,  3,     y -  4, 59,     y -  4);
+	boxfill8(vram, x, COL8_848484, 59,     y - 23, 59,     y -  5);
+	boxfill8(vram, x, COL8_000000,  2,     y -  3, 59,     y -  3);
+	boxfill8(vram, x, COL8_000000, 60,     y - 24, 60,     y -  3);
+
+	boxfill8(vram, x, COL8_848484, x - 47, y - 24, x -  4, y - 24);
+	boxfill8(vram, x, COL8_848484, x - 47, y - 23, x - 47, y -  4);
+	boxfill8(vram, x, COL8_FFFFFF, x - 47, y -  3, x -  4, y -  3);
+	boxfill8(vram, x, COL8_FFFFFF, x -  3, y - 24, x -  3, y -  3);
+	return;
+}
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font)
+{
+	int i;
+	char *p, d /* data */;
+	for (i = 0; i < 16; i++) {
+		p = vram + (y + i) * xsize + x;
+		d = font[i];
+		if ((d & 0x80) != 0) { p[0] = c; }
+		if ((d & 0x40) != 0) { p[1] = c; }
+		if ((d & 0x20) != 0) { p[2] = c; }
+		if ((d & 0x10) != 0) { p[3] = c; }
+		if ((d & 0x08) != 0) { p[4] = c; }
+		if ((d & 0x04) != 0) { p[5] = c; }
+		if ((d & 0x02) != 0) { p[6] = c; }
+		if ((d & 0x01) != 0) { p[7] = c; }
+	}
+	return;
+}
+void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s)
+{
+	for (; *s != 0x00; s++) {
+		putfont8(vram, xsize, x, y, c, hankaku + *s * 16);
+		x += 8;
+	}
+	return;
+}
+int sum(int count, ...) {
+	va_list ap;
+	va_start(ap, count);
+	
+	int sum = 0;
+	for (int i = 0; i < count; i++ ) {
+		sum += va_arg(ap, int);
+	}
+	va_end(ap);
+	return sum;
+}
+/*=== sprintの補助関数 ===*/
+void sub_sp(char *s, int arg, int i, int dig){
+	
+	int arg2 = arg;	
+	int d = 0;
+
+	while(arg2 > 0){arg2 /= dig;d++;}
+	for(int j = d-1;j >= 0;j--){
+		char c = arg%dig;
+		if(c < 10)	s[i+j] = 0x30+c;
+		else 	s[i+j] = 0x60+(c-9);
+		arg /= dig;
+	}
+}
+/*=== sprintfの代替関数 ===*/
+void sprint(int count, char *s, char *ss, ...){
+
+	va_list itr;
+	va_start(itr, count);
+	int arg, arg2, d;
+
+	for(int i = 0; ss[i] != 0x00;i++){
+		if(ss[i] != '%' || ss[i+1] == 0x00){
+			s[i] = ss[i];
+		}else{
+			if(ss[i+1] == 'd'){
+				sub_sp(s, va_arg(itr, int), i, 10);
+			}else if(ss[i+1] == 'x'){
+				s[i++] = 0x30;	s[i++] = 0x78;	// 0x78 -> 'x'
+				sub_sp(s, va_arg(itr, int), i, 16);
+			}
+			i += d;
+		}
+	}
+	va_end(itr);
+	return ;
 }

@@ -10,6 +10,7 @@ BIM2HRB  = $(TOOLPATH)bim2hrb.exe
 RULEFILE = $(TOOLPATH)haribote/haribote.rul
 EDIMG    = $(TOOLPATH)edimg.exe
 IMGTOL   = $(TOOLPATH)imgtol.com
+MAKEFONT = $(TOOLPATH)makefont.exe
 COPY     = cp
 DEL      = rm
 
@@ -20,25 +21,13 @@ ipl10.asm : ipl10.nas Makefile
 	\cat ipl10.nas > ipl10.asm
 
 ipl10.bin : ipl10.asm Makefile
-	# nasm -f bin ipl10.asm -o ipl10.bin -l ipl10.lst
 	nasm ipl10.asm -o ipl10.bin -l ipl10.lst
+
 asmhead.asm : asmhead.nas Makefile
 	\cat asmhead.nas > asmhead.asm
 
 asmhead.bin : asmhead.asm Makefile
 	nasm asmhead.asm -o asmhead.bin -l asmhead.lst
-
-# bootpack.gas : bootpack.c Makefile
-# 	$(CC1) -o bootpack.gas bootpack.c
-
-# bootpack.nas : bootpack.gas Makefile
-# 	gas2nask.exe -a bootpack.gas bootpack.nas
-
-# bootpack.asm : bootpack.nas Makefile
-# 	\cat bootpack.nas > bootpack.asm
-
-# bootpack.obj : bootpack.asm Makefile
-# 	nasm -fwin32 bootpack.asm -l bootpack.lst
 
 nasmfunc.asm : naskfunc.nas Makefile
 	\cat naskfunc.nas > nasmfunc.asm
@@ -46,16 +35,14 @@ nasmfunc.asm : naskfunc.nas Makefile
 nasmfunc.o : nasmfunc.asm Makefile
 	nasm -g -f elf nasmfunc.asm -o nasmfunc.o
 
-# bootpack.bim : bootpack.obj naskfunc.obj Makefile
-# 	$(OBJ2BIM) @$(RULEFILE) out:bootpack.bim stack:3136k map:bootpack.map \
-# 		bootpack.obj naskfunc.obj
-# 3MB+64KB=3136KB
+convert_hankaku.out : convert_hankaku.c Makefile
+	gcc convert_hankaku.c -o convert_hankaku.out
 
-# bootpack.hrb : bootpack.bim Makefile
-# 	$(BIM2HRB) bootpack.bim bootpack.hrb 0
+hankaku.c : convert_hankaku.out hankaku.txt Makefile
+	./convert_hankaku.out
 
-bootpack.hrb : bootpack.c har.ld nasmfunc.o Makefile
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c nasmfunc.o -o bootpack.hrb
+bootpack.hrb : bootpack.c hankaku.c har.ld nasmfunc.o Makefile
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c nasmfunc.o -o bootpack.hrb
 
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	\cat asmhead.bin bootpack.hrb > haribote.sys
@@ -69,10 +56,8 @@ img :
 
 run :
 	$(MAKE) img
-	qemu-system-i386 -fda haribote.img # "-fda" for floppy disk
-	# $(COPY) haribote.img ..\tolset\z_tools\qemu\fdimage0.bin
-	# $(MAKE) -C ../tolset/z_tools/qemu
-
+	qemu-system-i386 -fda haribote.img		#"-fda" for floppy disk
+	
 install :
 	$(MAKE) img
 	$(IMGTOL) w a: haribote.img
@@ -90,6 +75,8 @@ clean :
 	-$(DEL) bootpack.bim
 	-$(DEL) bootpack.hrb
 	-$(DEL) haribote.sys
+	-$(DEL) convert_hankaku.out
+	-$(DEL)	hankaku.c
 
 debug :
 	make img
