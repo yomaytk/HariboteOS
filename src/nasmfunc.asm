@@ -6,11 +6,14 @@
 [BITS 32]						; 32ビットモード用の機械語を作らせる
 ;[FILE "naskfunc.nas"]			; ソースファイル名情報
 
-		GLOBAL	io_hlt, io_cli, io_sti, io_stihlt
-		GLOBAL	io_in8,  io_in16,  io_in32
-		GLOBAL	io_out8, io_out16, io_out32
-		GLOBAL	io_load_eflags, io_store_eflags
-		GLOBAL  load_gdtr, load_idtr
+		global	io_hlt, io_cli, io_sti, io_stihlt
+		global	io_in8,  io_in16,  io_in32
+		global	io_out8, io_out16, io_out32
+		global	io_load_eflags, io_store_eflags
+		global	load_gdtr, load_idtr
+		global	asm_inthandler21, asm_inthandler27, asm_inthandler2c
+		extern	inthandler21, inthandler27, inthandler2c
+
 
 section .text
 
@@ -76,6 +79,7 @@ io_store_eflags:	; void io_store_eflags(int eflags);
 		PUSH	EAX
 		POPFD		; POP EFLAGS という意味
 		RET
+
 load_gdtr:		; void load_gdtr(int limit, int addr);
 		MOV		AX,[ESP+4]		; limit
 		MOV		[ESP+6],AX
@@ -87,3 +91,51 @@ load_idtr:		; void load_idtr(int limit, int addr);
 		MOV		[ESP+6],AX
 		LIDT	[ESP+6]
 		RET
+
+asm_inthandler21:
+		PUSH	ES
+		PUSH	DS
+		PUSHAD
+		MOV		EAX,ESP
+		PUSH	EAX
+		MOV		AX,SS
+		MOV		DS,AX
+		MOV		ES,AX
+		CALL	inthandler21
+		POP		EAX
+		POPAD
+		POP		DS
+		POP		ES
+		IRETD
+
+asm_inthandler27:
+		PUSH	ES
+		PUSH	DS
+		PUSHAD
+		MOV		EAX,ESP
+		PUSH	EAX
+		MOV		AX,SS
+		MOV		DS,AX
+		MOV		ES,AX
+		CALL	inthandler27
+		POP		EAX
+		POPAD
+		POP		DS
+		POP		ES
+		IRETD
+
+asm_inthandler2c:
+		PUSH	ES
+		PUSH	DS
+		PUSHAD
+		MOV		EAX,ESP
+		PUSH	EAX
+		MOV		AX,SS
+		MOV		DS,AX
+		MOV		ES,AX
+		CALL	inthandler2c
+		POP		EAX
+		POPAD
+		POP		DS
+		POP		ES
+		IRETD
