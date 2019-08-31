@@ -27,7 +27,17 @@ void HariMain(void)
 	io_out8(PIC1_IMR, 0xef); /* ƒ}ƒEƒX‚ð‹–‰Â(11101111) */
 
 	for (;;) {
-		io_hlt();
+		if(keybuf.flag == 0){
+			io_stihlt();
+		}else{
+			unsigned char i = keybuf.data;
+			char s[4];
+			keybuf.flag = 0;
+			io_sti();
+			sprint(s, "%x", i);
+			boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
+			putfonts8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
+		}
 	}
 }
 

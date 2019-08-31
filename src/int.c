@@ -1,9 +1,9 @@
-/* 割り込み関係 */
+/* ===== interrupt ===== */
 
 #include "bootpack.h"
 
 void init_pic(void)
-/* PICの初期化 */
+/* initialization PIC */
 {
 	io_out8(PIC0_IMR,  0xff  ); /* 全ての割り込みを受け付けない */
 	io_out8(PIC1_IMR,  0xff  ); /* 全ての割り込みを受け付けない */
@@ -23,15 +23,22 @@ void init_pic(void)
 
 	return;
 }
+
+
 void inthandler21(int *esp)
 /* PS/2キーボードからの割り込み */
 {
-	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-	boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
-	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, "INT 21 (IRQ-1) : PS/2 keyboard");
-	for (;;) {
-		io_hlt();
+
+	io_out8(PIC0_OCW2, 0x61);	// PICに割り込みの受理を通知
+
+	unsigned char data, s[4];
+	data = io_in8(PORT_KEYDAT);
+
+	if(keybuf.flag == 0){
+		keybuf.flag = 1;
+		keybuf.data = data;
 	}
+	return;
 }
 
 void inthandler2c(int *esp)
