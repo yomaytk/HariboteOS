@@ -16,7 +16,9 @@ struct BOOTINFO { /* 0x0ff0-0x0fff */
 void io_hlt();
 void io_cli();
 void io_sti();
+int io_stihlt();
 void io_out8(int port, int data);
+int io_in8(int port);
 int io_load_eflags();
 void io_store_eflags(int eflags);
 void load_gdtr(int limit, int addr);
@@ -28,7 +30,7 @@ void asm_inthandler2c();
 
 /*===== graphic.c =====*/
 
-void init_palette(void);
+void init_palette();
 void set_palette(int start, int end, unsigned char *rgb);
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
 void init_screen8(char *vram, int x, int y);
@@ -69,7 +71,7 @@ struct GATE_DESCRIPTOR {
 	short offset_high;
 };
 
-void init_gdtidt(void);
+void init_gdtidt();
 void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit, int base, int ar);
 void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 
@@ -82,6 +84,20 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define AR_DATA32_RW	0x4092
 #define AR_CODE32_ER	0x409a
 #define AR_INTGATE32	0x008e
+
+/*===== fifo.c =====*/
+
+#define FLAGS_OVERRUN	0x0001
+
+struct FIFO8{
+	unsigned char *buf;
+	int p, q, size, free, flags;
+};
+
+void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf);
+int fifo8_put(struct FIFO8 *fifo, unsigned char data);
+int fifo8_get(struct FIFO8 *fifo);
+int fifo8_status(struct FIFO8 *fifo);
 
 /*===== int.c =====*/
 #define PIC0_ICW1		0x0020
@@ -98,13 +114,10 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define PIC1_ICW4		0x00a1
 #define PORT_KEYDAT		0x0060
 
-struct KEYBUF{
-	unsigned char data, flag;
-};
+struct FIFO8 keyfifo;
 
-struct KEYBUF keybuf;
-
-void init_pic(void);
+void init_pic();
 void inthandler21(int *esp);
 void inthandler27(int *esp);
 void inthandler2c(int *esp);
+

@@ -2,7 +2,7 @@
 
 #include "bootpack.h"
 
-void init_pic(void)
+void init_pic()
 /* initialization PIC */
 {
 	io_out8(PIC0_IMR,  0xff  ); /* 全ての割り込みを受け付けない */
@@ -24,20 +24,16 @@ void init_pic(void)
 	return;
 }
 
-
 void inthandler21(int *esp)
 /* PS/2キーボードからの割り込み */
 {
 
 	io_out8(PIC0_OCW2, 0x61);	// PICに割り込みの受理を通知
 
-	unsigned char data, s[4];
+	unsigned char data;
 	data = io_in8(PORT_KEYDAT);
+	fifo8_put(&keyfifo, data);
 
-	if(keybuf.flag == 0){
-		keybuf.flag = 1;
-		keybuf.data = data;
-	}
 	return;
 }
 

@@ -4,7 +4,7 @@
 #include"bootpack.h"
 
 
-void init_gdtidt(void)
+void init_gdtidt()
 {
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 	struct GATE_DESCRIPTOR    *idt = (struct GATE_DESCRIPTOR    *) ADR_IDT;

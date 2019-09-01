@@ -6,7 +6,7 @@
 
 char hankaku[4096];
 
-void init_palette(void)
+void init_palette()
 {
 	static unsigned char table_rgb[16 * 3] = {
 		0x00, 0x00, 0x00,	/*  0:çï */

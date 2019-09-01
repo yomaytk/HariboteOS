@@ -29,7 +29,7 @@ hankaku.c : convert_hankaku.out hankaku.txt Makefile
 
 bootpack.hrb : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
-	graphic.c dsctbl.c int.c nasmfunc.o -o bootpack.hrb
+	graphic.c dsctbl.c int.c fifo.c nasmfunc.o -o bootpack.hrb
 
 haribote.sys : asmhead.bin bootpack.hrb Makefile
 	\cat asmhead.bin bootpack.hrb > haribote.sys

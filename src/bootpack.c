@@ -3,10 +3,10 @@
 #include<stdio.h>
 #include"bootpack.h"
 
-void HariMain(void)
+void main()
 {
 	struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
-	char s[100], mcursor[256];
+	char s[100], mcursor[256], keybuf[32];
 
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
@@ -14,6 +14,8 @@ void HariMain(void)
 
 	init_palette();												// color palette settings
 	init_screen8(binfo->vram, binfo->scrnx, binfo->scrny);		// screen initialization
+	fifo8_init(&keyfifo, 32, keybuf);							// FIFO initialization
+
 
 	/* mouse cursor */
 	int mx = (binfo->scrnx - 16) / 2; 
@@ -27,12 +29,12 @@ void HariMain(void)
 	io_out8(PIC1_IMR, 0xef); /* ƒ}ƒEƒX‚ð‹–‰Â(11101111) */
 
 	for (;;) {
-		if(keybuf.flag == 0){
+		io_cli();
+		if(fifo8_status(&keyfifo) == 0){
 			io_stihlt();
 		}else{
-			unsigned char i = keybuf.data;
-			char s[4];
-			keybuf.flag = 0;
+			unsigned char i = fifo8_get(&keyfifo);	// unsigned ???
+			char s[40];
 			io_sti();
 			sprint(s, "%x", i);
 			boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
