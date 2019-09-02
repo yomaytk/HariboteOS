@@ -105,16 +105,17 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 	return;
 }
 /*===== sprint‚Ì•â•ŠÖ” =====*/
-int sub_sp(char *s, int arg, int si, int dig){
+int sub_sp(char *s, int arg, int dig){
 	
 	int arg2 = arg;	
 	int d = 0;
 
 	while(arg2 > 0){arg2 /= dig;d++;}
+	if(d == 0)	d = 1;
 	for(int j = d-1;j >= 0;j--){
 		char c = arg%dig;
-		if(c < 10)	s[si+j] = 0x30+c;
-		else 	s[si+j] = 0x60+(c-9);
+		if(c < 10)	*(s+j) = 0x30+c;
+		else 	*(s+j) = 0x60+(c-9);
 		arg /= dig;
 	}
 	return d;
@@ -124,24 +125,23 @@ void sprint(char *s, char *ss, ...){
 
 	va_list itr;
 	va_start(itr, *ss);
-	int si = 0;
+	int d = 0;
 
-	for(int i = 0;ss[i] != 0x00;i++){
-		if(ss[i] != '%' || ss[i+1] == 0x00){
-			s[si++] = ss[i];
-		}else{
-			int next = va_arg(itr, int);
-			int d;
-			if(ss[i+1] == 'd'){
-				d = sub_sp(s, next, si, 10);
-			}else if(ss[i+1] == 'x'){
-				s[si++] = 0x30;	s[si++] = 0x78;	// 0x78 -> 'x'
-				d = sub_sp(s, next, si, 16);
+	while(*ss){
+		if(*ss != '%' || *(ss+1) == 0x00){
+			*(s++) = *(ss++);
+		}else {
+			char c = *(ss+1);
+			if(c == 'd'){
+				d = sub_sp(s, va_arg(itr, int), 10);
+			}else if(c == 'x'){
+				d = sub_sp(s, va_arg(itr, int), 16);
 			}
-			si += d;
-			i++;
+			s += d;
+			ss += 2;
 		}
 	}
+	*s = 0x00;
 	va_end(itr);
 	return ;
 }
