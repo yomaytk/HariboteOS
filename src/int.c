@@ -25,6 +25,8 @@ void init_pic()
 	return;
 }
 
+struct FIFO8 keyfifo;
+
 void inthandler21(int *esp)
 /* PS/2キーボードからの割り込み */
 {
@@ -35,6 +37,8 @@ void inthandler21(int *esp)
 
 	return;
 }
+
+struct FIFO8 mousefifo;
 
 void inthandler2c(int *esp)
 /* PS/2マウスからの割り込み */

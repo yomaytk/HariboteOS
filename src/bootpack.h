@@ -114,7 +114,7 @@ int fifo8_status(struct FIFO8 *fifo);
 #define PIC1_ICW4		0x00a1
 #define PORT_KEYDAT		0x0060
 
-struct FIFO8 keyfifo, mousefifo;
+// struct FIFO8 keyfifo, mousefifo;
 
 void init_pic();
 void inthandler21(int *esp);
@@ -135,4 +135,12 @@ void inthandler2c(int *esp);
 
 void wait_KBC_sendready();
 void init_keyboard();
-void enable_mouse();
+
+/*===== mouse.c =====*/
+
+struct MOUSE_DEC {
+	unsigned char buf[3], phase;
+};
+
+void enable_mouse(struct MOUSE_DEC *mdec);
+int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
