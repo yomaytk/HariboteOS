@@ -10,6 +10,8 @@ void main()
 	struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
 	char s[100], mcursor[256], keybuf[32], mousebuf[128];
 	struct MOUSE_DEC mdec;
+	unsigned int memtotal;
+	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
@@ -23,6 +25,16 @@ void main()
 	init_palette();												// color palette settings
 	init_screen8(binfo->vram, binfo->scrnx, binfo->scrny);		// screen initialization
 	
+	/* make memory management table */
+	memtotal = memtest(0x00400000, 0xbfffffff);
+	memman_init(memman);
+	memman_free(memman, 0x00001000, 0x0009e000); /* 0x00001000 - 0x0009efff */
+	memman_free(memman, 0x00400000, memtotal - 0x00400000);
+	sprint(s, "memory %dMB   free : %dKB",
+			memtotal / (1024 * 1024), memman_total(memman) / 1024);
+	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
+
+
 	/* mouse cursor default*/
 	int mx = (binfo->scrnx - 16) / 2; 
 	int	my = (binfo->scrny - 28 - 16) / 2;
