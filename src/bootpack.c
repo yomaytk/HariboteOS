@@ -23,13 +23,18 @@ void main()
 	init_palette();												// color palette settings
 	init_screen8(binfo->vram, binfo->scrnx, binfo->scrny);		// screen initialization
 	
-	/* mouse cursor */
+	/* mouse cursor default*/
 	int mx = (binfo->scrnx - 16) / 2; 
 	int	my = (binfo->scrny - 28 - 16) / 2;
 	init_mouse_cursor8(mcursor, COL8_008484);
 	putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 	sprint(s, "(%d, %d)", mx, my);
 	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
+
+	/* memory amount check */
+	int i = memtest(0x00400000, 0xbfffffff) / (1024 * 1024);
+	sprint(s, "memory %dMB", i);
+	putfonts8_asc(binfo->vram, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
 	
 	enable_mouse(&mdec);
 	
@@ -50,13 +55,40 @@ void main()
 				char s[40];
 				io_sti();
 				if (mouse_decode(&mdec, data) != 0) {
-					sprint(s, "%x %x %x", mdec.buf[0], mdec.buf[1], mdec.buf[2]);
-					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 32, 16, 32 + 8 * 8 - 1, 31);
+					sprint(s, "[lcr %d %d]", mdec.x, mdec.y);
+					if ((mdec.btn & 0x01) != 0) {
+						s[1] = 'L';
+					}
+					if ((mdec.btn & 0x02) != 0) {
+						s[3] = 'R';
+					}
+					if ((mdec.btn & 0x04) != 0) {
+						s[2] = 'C';
+					}
+					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 32, 16, 32 + 15 * 8 - 1, 31);
 					putfonts8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
+					/* マウスカーソルの移動 */
+					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, mx, my, mx + 15, my + 15); /* マウス消す */
+					mx += mdec.x;
+					my += mdec.y;
+					if (mx < 0) {
+						mx = 0;
+					}
+					if (my < 0) {
+						my = 0;
+					}
+					if (mx > binfo->scrnx - 16) {
+						mx = binfo->scrnx - 16;
+					}
+					if (my > binfo->scrny - 16) {
+						my = binfo->scrny - 16;
+					}
+					sprint(s, "(%d, %d)", mx, my);
+					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 0, 79, 15); /* 座標消す */
+					putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s); /* 座標書く */
+					putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16); /* マウス描く */
 				}
 			}
 		}
 	}
 }
-
-

@@ -23,9 +23,14 @@ int io_load_eflags();
 void io_store_eflags(int eflags);
 void load_gdtr(int limit, int addr);
 void load_idtr(int limit, int addr);
+unsigned int load_cr0();
+void store_cr0(int cr0);
 void asm_inthandler21();
 void asm_inthandler27();
 void asm_inthandler2c();
+unsigned int memtest_sub(unsigned int start, unsigned int end);
+void mts_loop();
+void mts_fin();
 
 
 /*===== graphic.c =====*/
@@ -140,7 +145,15 @@ void init_keyboard();
 
 struct MOUSE_DEC {
 	unsigned char buf[3], phase;
+	int x, y, btn;
 };
 
 void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
+
+/*===== memory.c =====*/
+
+#define EFLAGS_AC_BIT		0x00040000
+#define CR0_CACHE_DISABLE	0x60000000
+
+unsigned int memtest(unsigned int start, unsigned int end);

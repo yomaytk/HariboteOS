@@ -107,18 +107,23 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 /*===== sprint‚Ì•â•ŠÖ” =====*/
 int sub_sp(char *s, int arg, int dig){
 	
-	int arg2 = arg;	
-	int d = 0;
+	int a = arg, d = 0, f = 0, b;
 
-	while(arg2 > 0){arg2 /= dig;d++;}
+	if(a < 0){
+		*(s++) = 0x2d;	// 0x2d -> '-'
+		a *= -1;
+		f = 1;
+	}
+	b = a;	
+	while(b > 0){b /= dig;d++;}
 	if(d == 0)	d = 1;
 	for(int j = d-1;j >= 0;j--){
-		char c = arg%dig;
+		char c = a%dig;
 		if(c < 10)	*(s+j) = 0x30+c;
 		else 	*(s+j) = 0x60+(c-9);
-		arg /= dig;
+		a /= dig;
 	}
-	return d;
+	return (d+f);
 }
 /*===== sprintf‚Ì‘ã‘ÖŠÖ” =====*/
 void sprint(char *s, char *ss, ...){

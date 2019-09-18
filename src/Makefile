@@ -1,10 +1,9 @@
 TOOLPATH = ../tolset/z_tools/
-INCPATH  = ../tolset/z_tools/haribote/
+INCPATH  = ../tolset/z_tools/os/
 
 MAKE     = make -r
 CC1      = cc1.exe -I$(INCPATH) -Os -Wall -quiet
-GAS2NASK = $(TOOLPATH)gas2nask.exe -a
-RULEFILE = $(TOOLPATH)haribote/haribote.rul
+RULEFILE = $(TOOLPATH)os/os.rul
 IMGTOL   = $(TOOLPATH)imgtol.com
 COPY     = cp
 DEL      = rm
@@ -27,29 +26,29 @@ convert_hankaku.out : convert_hankaku.c Makefile
 hankaku.c : convert_hankaku.out hankaku.txt Makefile
 	./convert_hankaku.out
 
-bootpack.hrb : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
+bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
-	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c nasmfunc.o -o bootpack.hrb
+	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c nasmfunc.o -o bootpack.o
 
-haribote.sys : asmhead.bin bootpack.hrb Makefile
-	\cat asmhead.bin bootpack.hrb > haribote.sys
+os.sys : asmhead.bin bootpack.o Makefile
+	\cat asmhead.bin bootpack.o > os.sys
 
-haribote.img : ipl10.bin haribote.sys Makefile
-	mformat -f 1440 -C -B ipl10.bin -i haribote.img ::
-	mcopy haribote.sys -i haribote.img ::
+os.img : ipl10.bin os.sys Makefile
+	mformat -f 1440 -C -B ipl10.bin -i os.img ::
+	mcopy os.sys -i os.img ::
 
 img :
-	$(MAKE) haribote.img
+	$(MAKE) os.img
 
 run :
 	$(MAKE) img
-	qemu-system-i386 -fda haribote.img		
+	qemu-system-i386 -fda os.img		
 	
 #"-fda" for floppy disk
 	
 install :
 	$(MAKE) img
-	$(IMGTOL) w a: haribote.img
+	$(IMGTOL) w a: os.img
 
 clean :
 	-$(DEL) *.bin
@@ -60,14 +59,14 @@ clean :
 	-$(DEL) *.img
 	-$(DEL) bootpack.map
 	-$(DEL) bootpack.hrb
-	-$(DEL) haribote.sys
+	-$(DEL) os.sys
 	-$(DEL) convert_hankaku.out
 	-$(DEL)	hankaku.c
 
 debug :
 	make img
-	qemu-system-i386 -fda haribote.img -gdb tcp::10000 -S
+	qemu-system-i386 -fda os.img -gdb tcp::10000 -S
 
 src_only :
 	$(MAKE) clean
-	-$(DEL) haribote.img
+	-$(DEL) os.img
