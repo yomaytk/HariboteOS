@@ -13,8 +13,8 @@ void main()
 	unsigned int memtotal;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct SHTCTL *shtctl;
-	struct SHEET *sht_back, *sht_mouse;
-	unsigned char *buf_back, *buf_mouse;
+	struct SHEET *sht_back, *sht_mouse, *sht_win;
+	unsigned char *buf_back, *buf_mouse, *buf_win;
 
 
 	init_gdtidt();			// GDT IDT initialization
@@ -45,29 +45,37 @@ void main()
 	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
 	sht_back  = sheet_alloc(shtctl);
 	sht_mouse = sheet_alloc(shtctl);
+	sht_win = sheet_alloc(shtctl);
 	buf_back  = (unsigned char *) memman_alloc_4k(memman, binfo->scrnx * binfo->scrny);
 	buf_mouse = (unsigned char *) memman_alloc_4k(memman, 256);
+	buf_win = (unsigned char *)	memman_alloc_4k(memman, 160 * 68);
 	
 	sheet_setbuf(sht_back, buf_back, binfo->scrnx, binfo->scrny, -1); /* 透明色なし */
 	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, 99);
+	sheet_setbuf(sht_win, buf_win, 160, 68, -1);
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);		// screen initialization
+	make_window8(buf_win, 160, 68, "window");
+	putfonts8_asc(buf_win, 160, 24, 28, COL8_000000, "Welcome to");
+	putfonts8_asc(buf_win, 160, 24, 44, COL8_000000, "  Mas-OS!");
 
 	/* mouse cursor default*/
 	int mx = (binfo->scrnx - 16) / 2; 
 	int	my = (binfo->scrny - 28 - 16) / 2;
 	init_mouse_cursor8(buf_mouse, 99);
 
-	sheet_slide(shtctl, sht_back, 0, 0);
-	sheet_slide(shtctl, sht_mouse, mx, my);
-	sheet_updown(shtctl, sht_back,  0);
-	sheet_updown(shtctl, sht_mouse, 1);	
+	sheet_slide(sht_back, 0, 0);
+	sheet_slide(sht_mouse, mx, my);
+	sheet_slide(sht_win, 80, 72);
+	sheet_updown(sht_back,  0);
+	sheet_updown(sht_win, 1);
+	sheet_updown(sht_mouse, 2);	
 
 	sprint(s, "(%d, %d)", mx, my);
 	putfonts8_asc(buf_back, binfo->scrnx, 0, 0, COL8_FFFFFF, s);
 	sprint(s, "memory %dMB   free : %dKB",
 			memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-	sheet_refresh(shtctl, sht_back, 0, 0, binfo->scrnx, 48);	
+	sheet_refresh(sht_back, 0, 0, binfo->scrnx, 48);	
 	
 	for (;;) {
 		io_cli();
@@ -81,7 +89,7 @@ void main()
 				sprint(s, "%x", data);
 				boxfill8(buf_back, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
 				putfonts8_asc(buf_back, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
-				sheet_refresh(shtctl, sht_back, 0, 16, 16, 32);				
+				sheet_refresh(sht_back, 0, 16, 16, 32);				
 			}else if(fifo8_status(&mousefifo) != 0){
 				unsigned char data = fifo8_get(&mousefifo);
 				char s[40];
@@ -99,7 +107,7 @@ void main()
 					}
 					boxfill8(buf_back, binfo->scrnx, COL8_008484, 32, 16, 32 + 15 * 8 - 1, 31);
 					putfonts8_asc(buf_back, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
-					sheet_refresh(shtctl, sht_back, 32, 16, 32 + 15 * 8, 32);
+					sheet_refresh(sht_back, 32, 16, 32 + 15 * 8, 32);
 					/* マウスカーソルの移動 */
 					mx += mdec.x;
 					my += mdec.y;
@@ -109,17 +117,17 @@ void main()
 					if (my < 0) {
 						my = 0;
 					}
-					if (mx > binfo->scrnx - 16) {
-						mx = binfo->scrnx - 16;
+					if (mx > binfo->scrnx - 1) {
+						mx = binfo->scrnx - 1;
 					}
-					if (my > binfo->scrny - 16) {
-						my = binfo->scrny - 16;
+					if (my > binfo->scrny - 1) {
+						my = binfo->scrny - 1;
 					}
 					sprint(s, "(%d, %d)", mx, my);
 					boxfill8(buf_back, binfo->scrnx, COL8_008484, 0, 0, 79, 15); /* 座標消す */
 					putfonts8_asc(buf_back, binfo->scrnx, 0, 0, COL8_FFFFFF, s); /* 座標書く */
-					sheet_refresh(shtctl, sht_back, 0, 0, 80, 16);
-					sheet_slide(shtctl, sht_mouse, mx, my);			
+					sheet_refresh(sht_back, 0, 0, 80, 16);
+					sheet_slide(sht_mouse, mx, my);			
 				}
 			}
 		}

@@ -35,17 +35,6 @@ void mts_fin();
 
 /*===== graphic.c =====*/
 
-void init_palette();
-void set_palette(int start, int end, unsigned char *rgb);
-void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
-void init_screen8(char *vram, int x, int y);
-void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
-void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
-void sprint(char *ss, char *s, ...);
-void init_mouse_cursor8(char *mouse, char bc);
-void putblock8_8(char *vram, int vxsize, int pxsize,
-	int pysize, int px0, int py0, char *buf, int bxsize);
-
 #define COL8_000000		0
 #define COL8_FF0000		1
 #define COL8_00FF00		2
@@ -62,6 +51,18 @@ void putblock8_8(char *vram, int vxsize, int pxsize,
 #define COL8_840084		13
 #define COL8_008484		14
 #define COL8_848484		15
+
+void init_palette();
+void set_palette(int start, int end, unsigned char *rgb);
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
+void init_screen8(char *vram, int x, int y);
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
+void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
+void sprint(char *ss, char *s, ...);
+void init_mouse_cursor8(char *mouse, char bc);
+void putblock8_8(char *vram, int vxsize, int pxsize,
+	int pysize, int px0, int py0, char *buf, int bxsize);
+void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
 
 /*===== dsctbl.c =====*/
 
@@ -184,6 +185,7 @@ int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size);
 struct SHEET {
 	unsigned char *buf;
 	int bxsize, bysize, vx0, vy0, col_inv, height, flags;
+	struct SHTCTL *ctl;
 };
 struct SHTCTL {
 	unsigned char *vram;
@@ -195,8 +197,8 @@ struct SHTCTL {
 struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize, int ysize);
 struct SHEET *sheet_alloc(struct SHTCTL *ctl);
 void sheet_setbuf(struct SHEET *sht, unsigned char *buf, int xsize, int ysize, int col_inv);
-void sheet_refresh(struct SHTCTL *ctl, struct SHEET *sht, int bx0, int by0, int bx1, int by1);
+void sheet_refresh(struct SHEET *sht, int bx0, int by0, int bx1, int by1);
 void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1);
-void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height);
-void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0);
-void sheet_free(struct SHTCTL *ctl, struct SHEET *sht);
+void sheet_updown(struct SHEET *sht, int height);
+void sheet_slide(struct SHEET *sht, int vx0, int vy0);
+void sheet_free(struct SHEET *sht);

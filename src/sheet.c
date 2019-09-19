@@ -17,6 +17,7 @@ struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize
 	ctl->top = -1; /* シートは一枚もない */
 	for (i = 0; i < MAX_SHEETS; i++) {
 		ctl->sheets0[i].flags = 0; /* 未使用マーク */
+		ctl->sheets0[i].ctl = ctl;
 	}
 err:
 	return ctl;
@@ -50,6 +51,10 @@ void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1)
 	int h, bx, by, vx, vy, bx0, by0, bx1, by1;
 	unsigned char *buf, c, *vram = ctl->vram;
 	struct SHEET *sht;
+	if(vx0 < 0)	vx0 = 0;
+	if(vy0 < 0)	vy0 = 0;
+	if(vx1 > ctl->xsize)	vx1 = ctl->xsize;
+	if(vy1 > ctl->ysize)	vy1 = ctl->ysize;
 	for (h = 0; h <= ctl->top; h++) {
 		sht = ctl->sheets[h];
 		buf = sht->buf;
@@ -76,9 +81,10 @@ void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1)
 	return;
 }
 
-void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height)
+void sheet_updown(struct SHEET *sht, int height)
 {
 	int h, old = sht->height; /* 設定前の高さを記憶する */
+	struct SHTCTL *ctl = sht->ctl;
 
 	/* 指定が低すぎや高すぎだったら、修正する */
 	if (height > ctl->top + 1) {
@@ -131,16 +137,18 @@ void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height)
 	return;
 }
 
-void sheet_refresh(struct SHTCTL *ctl, struct SHEET *sht, int bx0, int by0, int bx1, int by1)
+void sheet_refresh(struct SHEET *sht, int bx0, int by0, int bx1, int by1)
 {
+	struct SHTCTL *ctl = sht->ctl;
 	if (sht->height >= 0) { /* もしも表示中なら、新しい下じきの情報に沿って画面を描き直す */
 		sheet_refreshsub(ctl, sht->vx0 + bx0, sht->vy0 + by0, sht->vx0 + bx1, sht->vy0 + by1);
 	}
 	return;
 }
 
-void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0)
+void sheet_slide(struct SHEET *sht, int vx0, int vy0)
 {
+	struct SHTCTL *ctl = sht->ctl;
 	int old_vx0 = sht->vx0, old_vy0 = sht->vy0;
 	sht->vx0 = vx0;
 	sht->vy0 = vy0;
@@ -151,10 +159,11 @@ void sheet_slide(struct SHTCTL *ctl, struct SHEET *sht, int vx0, int vy0)
 	return;
 }
 
-void sheet_free(struct SHTCTL *ctl, struct SHEET *sht)
+void sheet_free(struct SHEET *sht)
 {
+	struct SHTCTL *ctl = sht->ctl;
 	if (sht->height >= 0) {
-		sheet_updown(ctl, sht, -1); /* 表示中ならまず非表示にする */
+		sheet_updown(sht, -1); /* 表示中ならまず非表示にする */
 	}
 	sht->flags = 0; /* 未使用マーク */
 	return;
