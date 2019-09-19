@@ -10,7 +10,7 @@ void main()
 	struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
 	char s[100], mcursor[256], keybuf[32], mousebuf[128];
 	struct MOUSE_DEC mdec;
-	unsigned int memtotal;
+	unsigned int memtotal, count = 0;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct SHTCTL *shtctl;
 	struct SHEET *sht_back, *sht_mouse, *sht_win;
@@ -48,15 +48,13 @@ void main()
 	sht_win = sheet_alloc(shtctl);
 	buf_back  = (unsigned char *) memman_alloc_4k(memman, binfo->scrnx * binfo->scrny);
 	buf_mouse = (unsigned char *) memman_alloc_4k(memman, 256);
-	buf_win = (unsigned char *)	memman_alloc_4k(memman, 160 * 68);
+	buf_win = (unsigned char *)	memman_alloc_4k(memman, 160 * 52);
 	
 	sheet_setbuf(sht_back, buf_back, binfo->scrnx, binfo->scrny, -1); /* “§–¾F‚È‚µ */
 	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, 99);
-	sheet_setbuf(sht_win, buf_win, 160, 68, -1);
+	sheet_setbuf(sht_win, buf_win, 160, 52, -1);
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);		// screen initialization
-	make_window8(buf_win, 160, 68, "window");
-	putfonts8_asc(buf_win, 160, 24, 28, COL8_000000, "Welcome to");
-	putfonts8_asc(buf_win, 160, 24, 44, COL8_000000, "  Mas-OS!");
+	make_window8(buf_win, 160, 52, "counter");
 
 	/* mouse cursor default*/
 	int mx = (binfo->scrnx - 16) / 2; 
@@ -78,9 +76,16 @@ void main()
 	sheet_refresh(sht_back, 0, 0, binfo->scrnx, 48);	
 	
 	for (;;) {
+
+		count++;
+		sprint(s, "%d", count);
+		boxfill8(buf_win, 160, COL8_C6C6C6, 40, 28, 119, 43);
+		putfonts8_asc(buf_win, 160, 40, 28, COL8_000000, s);
+		sheet_refresh(sht_win, 40, 28, 120, 44);
+
 		io_cli();
 		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) == 0){
-			io_stihlt();
+			io_sti();
 		}else{
 			if(fifo8_status(&keyfifo) != 0){
 				unsigned char data = fifo8_get(&keyfifo);	// unsigned ???
