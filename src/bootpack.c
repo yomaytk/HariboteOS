@@ -3,19 +3,26 @@
 #include<stdio.h>
 #include"bootpack.h"
 
-extern struct FIFO8 keyfifo, mousefifo;
 
 void main()
 {
+	/* bootinformation */
 	struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
-	struct FIFO8 timerfifo;
-	char s[100], mcursor[256], keybuf[32], mousebuf[128], timerbuf[8];
+	/* buf for graphic */
+	char s[100], mcursor[256], keybuf[32], mousebuf[128];
 	struct MOUSE_DEC mdec;
+	/* memory */
 	unsigned int memtotal, count = 0;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+	/* sheet */
 	struct SHTCTL *shtctl;
 	struct SHEET *sht_back, *sht_mouse, *sht_win;
 	unsigned char *buf_back, *buf_mouse, *buf_win;
+	/* timer */
+	struct FIFO8 timerfifo, timerfifo2, timerfifo3;
+	char timerbuf[8], timerbuf2[8], timerbuf3[8];
+	struct TIMER *timer, *timer2, *timer3;
+
 
 
 	init_gdtidt();			// GDT IDT initialization
@@ -24,28 +31,31 @@ void main()
 	init_pit();
 	fifo8_init(&keyfifo, 32, keybuf);				// FIFO keyboard initialization
 	fifo8_init(&mousefifo, 128, mousebuf);			// FIFO mouse initialization
-	fifo8_init(&timerfifo, 8, timerbuf);			// FIFO timer initilization
-	io_out8(PIC0_IMR, 0xf8); 			// PIC1とキーボードを許可(11111001)
+	io_out8(PIC0_IMR, 0xf8); 			// PIC1とキーボードを許可(11111000)
 	io_out8(PIC1_IMR, 0xef); 			// マウスを許可(11101111)
 
 	init_keyboard();
 	enable_mouse(&mdec);
-	settimer(300, &timerfifo, 1);
+
+	fifo8_init(&timerfifo, 8, timerbuf);
+	timer = timer_alloc();
+	timer_init(timer, &timerfifo, 1);
+	timer_settime(timer, 1000);
+	fifo8_init(&timerfifo2, 8, timerbuf2);
+	timer2 = timer_alloc();
+	timer_init(timer2, &timerfifo2, 1);
+	timer_settime(timer2, 300);
+	fifo8_init(&timerfifo3, 8, timerbuf3);
+	timer3 = timer_alloc();
+	timer_init(timer3, &timerfifo3, 1);
+	timer_settime(timer3, 50);
 
 	/* make memory management table */
 	memtotal = memtest(0x00400000, 0xbfffffff);
 	memman_init(memman);
 	memman_free(memman, 0x00001000, 0x0009e000); /* 0x00001000 - 0x0009efff */
 	memman_free(memman, 0x00400000, memtotal - 0x00400000);
-	sprint(s, "memory %dMB   free : %dKB",
-			memtotal / (1024 * 1024), memman_total(memman) / 1024);
-	putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-
-	/* memory amount check */
-	int i = memtest(0x00400000, 0xbfffffff) / (1024 * 1024);
-	sprint(s, "memory %dMB", i);
-	putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-
+	
 	init_palette();												// color palette settings
 	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
 	sht_back  = sheet_alloc(shtctl);
@@ -88,7 +98,8 @@ void main()
 		sheet_refresh(sht_win, 40, 28, 120, 44);
 
 		io_cli();
-		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) + fifo8_status(&timerfifo) == 0){
+		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) + fifo8_status(&timerfifo) 
+			+ fifo8_status(&timerfifo2) + fifo8_status(&timerfifo3) == 0){
 			io_sti();
 		}else{
 			if(fifo8_status(&keyfifo) != 0){
@@ -138,11 +149,28 @@ void main()
 					sheet_refresh(sht_back, 0, 0, 80, 16);
 					sheet_slide(sht_mouse, mx, my);			
 				}
-			}else if(fifo8_status(&timerfifo) != 0){
-				unsigned int data = fifo8_get(&timerfifo);
+			}else if (fifo8_status(&timerfifo) != 0) {
+				unsigned int data = fifo8_get(&timerfifo); /* とりあえず読み込む（からにするために） */
 				io_sti();
-				putfonts8_asc(buf_back, binfo->scrnx, 0, 64, COL8_FFFFFF, "3[sec]");
+				putfonts8_asc(buf_back, binfo->scrnx, 0, 64, COL8_FFFFFF, "10[sec]");
 				sheet_refresh(sht_back, 0, 64, 56, 80);
+			}else if (fifo8_status(&timerfifo2) != 0) {
+				unsigned int data = fifo8_get(&timerfifo2); /* とりあえず読み込む（からにするために） */
+				io_sti();
+				putfonts8_asc(buf_back, binfo->scrnx, 0, 80, COL8_FFFFFF, "3[sec]");
+				sheet_refresh(sht_back, 0, 80, 48, 96);
+			}else if (fifo8_status(&timerfifo3) != 0) {
+				unsigned data = fifo8_get(&timerfifo3);
+				io_sti();
+				if (data != 0) {
+					timer_init(timer3, &timerfifo3, 0); /* 次は0を */
+					boxfill8(buf_back, binfo->scrnx, COL8_FFFFFF, 8, 96, 15, 111);
+				} else {
+					timer_init(timer3, &timerfifo3, 1); /* 次は1を */
+					boxfill8(buf_back, binfo->scrnx, COL8_008484, 8, 96, 15, 111);
+				}
+				timer_settime(timer3, 50);
+				sheet_refresh(sht_back, 8, 96, 16, 112);
 			}
 		}
 	}

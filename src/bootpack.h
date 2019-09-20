@@ -101,6 +101,8 @@ struct FIFO8{
 	int p, q, size, free, flags;
 };
 
+extern struct FIFO8 keyfifo, mousefifo;
+
 void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf);
 int fifo8_put(struct FIFO8 *fifo, unsigned char data);
 int fifo8_get(struct FIFO8 *fifo);
@@ -208,13 +210,23 @@ void sheet_free(struct SHEET *sht);
 
 #define PIT_CTRL	0x0043
 #define PIT_CNT0	0x0040
+#define MAX_TIMER	500
 
-struct TIMERCTL {
-	unsigned int count, timeout;
+struct TIMER {
+	unsigned int timeout, flags;
 	struct FIFO8 *fifo;
 	unsigned char data;
 };
+struct TIMERCTL {
+	unsigned int count;
+	struct TIMER timer[MAX_TIMER];
+};
+
 extern struct TIMERCTL timerctl;
-void init_pit();
+
+void init_pit(void);
+struct TIMER *timer_alloc(void);
+void timer_free(struct TIMER *timer);
+void timer_init(struct TIMER *timer, struct FIFO8 *fifo, unsigned char data);
+void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
-void settimer(unsigned int timeout, struct FIFO8 *fifo, unsigned char data);
