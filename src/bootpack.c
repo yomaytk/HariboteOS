@@ -88,8 +88,12 @@ void main()
 	sprint(s, "memory %dMB   free : %dKB",
 			memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-	sheet_refresh(sht_back, 0, 0, binfo->scrnx, 48);	
+
+	sprint(s, "debug: %d", 10);
+	putfonts8_asc(buf_back, binfo->scrnx, 0, 155, COL8_FFFFFF, s);	
 	
+	sheet_refresh(sht_back, 0, 0, binfo->scrnx, binfo->scrny);
+
 	for (;;) {
 
 		sprint(s, "%d", timerctl.count);
