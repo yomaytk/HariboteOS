@@ -3,16 +3,24 @@
 #include<stdio.h>
 #include"bootpack.h"
 
-void enable_mouse(struct MOUSE_DEC *mdec)
+struct FIFO32 *mousefifo;
+int mousedata0;
+
+void enable_mouse(struct FIFO32 *fifo, int data0, struct MOUSE_DEC *mdec)
 {
+	/* 書き込み先のFIFOバッファを記憶 */
+	mousefifo = fifo;
+	mousedata0 = data0;
 	/* マウス有効 */
 	wait_KBC_sendready();
 	io_out8(PORT_KEYCMD, KEYCMD_SENDTO_MOUSE);
 	wait_KBC_sendready();
 	io_out8(PORT_KEYDAT, MOUSECMD_ENABLE);
-	mdec->phase = 0;
-	return; /* うまくいくとACK(0xfa)が送信されてくる */
+	/* うまくいくとACK(0xfa)が送信されてくる */
+	mdec->phase = 0; /* マウスの0xfaを待っている段階 */
+	return;
 }
+
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
 {
 	if (mdec->phase == 0) {
@@ -56,16 +64,14 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
 	return -1; /* ここに来ることはないはず */
 }
 
-struct FIFO8 mousefifo;
-
 void inthandler2c(int *esp)
 /* PS/2マウスからの割り込み */
 {
-	unsigned char data;
+	int data;
 	io_out8(PIC1_OCW2, 0x64);
 	io_out8(PIC0_OCW2, 0x62);
 	data = io_in8(PORT_KEYDAT);
-	fifo8_put(&mousefifo, data);
+	fifo32_put(mousefifo, data + mousedata0);
 	
 	return;
 }

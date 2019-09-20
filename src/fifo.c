@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include"bootpack.h"
 
-void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf){	// unsigned char *buf ???
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf){	// unsigned char *buf ???
 	
 	fifo->buf = buf;	
 	fifo->p = 0;
@@ -13,7 +13,7 @@ void fifo8_init(struct FIFO8 *fifo, int size, unsigned char *buf){	// unsigned c
 	return;
 }
 
-int fifo8_put(struct FIFO8 *fifo, unsigned char data){	// unsigned char data ???
+int fifo32_put(struct FIFO32 *fifo, int data){	// unsigned char data ???
 	
 	if(fifo->free == 0){
 		fifo->free |= FLAGS_OVERRUN;
@@ -27,7 +27,7 @@ int fifo8_put(struct FIFO8 *fifo, unsigned char data){	// unsigned char data ???
 	return 1;
 }
 
-int fifo8_get(struct FIFO8 *fifo){
+int fifo32_get(struct FIFO32 *fifo){
 	
 	if(fifo->free == fifo->size){
 		return -1;
@@ -40,6 +40,6 @@ int fifo8_get(struct FIFO8 *fifo){
 	return data;
 }
 
-int fifo8_status(struct FIFO8 *fifo){
+int fifo32_status(struct FIFO32 *fifo){
 	return fifo->size - fifo->free;
 }

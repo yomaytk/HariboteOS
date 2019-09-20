@@ -20,11 +20,11 @@ default :
 nasmfunc.o : nasmfunc.asm Makefile
 	nasm -g -f elf nasmfunc.asm -o nasmfunc.o
 
-convert_hankaku.out : convert_hankaku.c Makefile
-	gcc convert_hankaku.c -o convert_hankaku.out
+convert_hankaku.o : convert_hankaku.c Makefile
+	gcc convert_hankaku.c -o convert_hankaku.o
 
-hankaku.c : convert_hankaku.out hankaku.txt Makefile
-	./convert_hankaku.out
+hankaku.c : convert_hankaku.o hankaku.txt Makefile
+	./convert_hankaku.o
 
 bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
@@ -57,9 +57,8 @@ clean :
 	-$(DEL)	*.o
 	-$(DEL) *.img
 	-$(DEL) bootpack.map
-	-$(DEL) bootpack.hrb
 	-$(DEL) os.sys
-	-$(DEL) convert_hankaku.out
+	-$(DEL) convert_hankaku.o
 	-$(DEL)	hankaku.c
 
 debug :
