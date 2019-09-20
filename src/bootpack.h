@@ -28,6 +28,7 @@ void store_cr0(int cr0);
 void asm_inthandler21();
 void asm_inthandler27();
 void asm_inthandler2c();
+void asm_inthandler20();
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void mts_loop();
 void mts_fin();
@@ -120,12 +121,9 @@ int fifo8_status(struct FIFO8 *fifo);
 #define PIC1_ICW4		0x00a1
 #define PORT_KEYDAT		0x0060
 
-// struct FIFO8 keyfifo, mousefifo;
 
 void init_pic();
-void inthandler21(int *esp);
 void inthandler27(int *esp);
-void inthandler2c(int *esp);
 
 /*===== kbc.c =====*/
 
@@ -141,6 +139,8 @@ void inthandler2c(int *esp);
 
 void wait_KBC_sendready();
 void init_keyboard();
+void inthandler21(int *esp);
+
 
 /*===== mouse.c =====*/
 
@@ -151,6 +151,8 @@ struct MOUSE_DEC {
 
 void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
+void inthandler2c(int *esp);
+
 
 /*===== memory.c =====*/
 
@@ -201,3 +203,18 @@ void sheet_refresh(struct SHEET *sht, int bx0, int by0, int bx1, int by1);
 void sheet_updown(struct SHEET *sht, int height);
 void sheet_slide(struct SHEET *sht, int vx0, int vy0);
 void sheet_free(struct SHEET *sht);
+
+/* ===== timer.c ===== */
+
+#define PIT_CTRL	0x0043
+#define PIT_CNT0	0x0040
+
+struct TIMERCTL {
+	unsigned int count, timeout;
+	struct FIFO8 *fifo;
+	unsigned char data;
+};
+extern struct TIMERCTL timerctl;
+void init_pit();
+void inthandler20(int *esp);
+void settimer(unsigned int timeout, struct FIFO8 *fifo, unsigned char data);

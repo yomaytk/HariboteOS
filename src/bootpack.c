@@ -8,7 +8,8 @@ extern struct FIFO8 keyfifo, mousefifo;
 void main()
 {
 	struct BOOTINFO *binfo = (struct BOOTINFO *) 0x0ff0;
-	char s[100], mcursor[256], keybuf[32], mousebuf[128];
+	struct FIFO8 timerfifo;
+	char s[100], mcursor[256], keybuf[32], mousebuf[128], timerbuf[8];
 	struct MOUSE_DEC mdec;
 	unsigned int memtotal, count = 0;
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
@@ -22,11 +23,15 @@ void main()
 	io_sti(); 				/* IDT/PICの初期化が終わったのでCPUの割り込み禁止を解除 */
 	fifo8_init(&keyfifo, 32, keybuf);				// FIFO keyboard initialization
 	fifo8_init(&mousefifo, 128, mousebuf);			// FIFO mouse initialization
-	io_out8(PIC0_IMR, 0xf9); 			// PIC1とキーボードを許可(11111001)
+	// init_pit();
+	io_out8(PIC0_IMR, 0xf9); /* PITとPIC1とキーボードを許可(11111000) */
 	io_out8(PIC1_IMR, 0xef); 			// マウスを許可(11101111)
+
+	// fifo8_init(&timerfifo, 8, timerbuf);
+	// settimer(300, &timerfifo, 1);
+
 	init_keyboard();
 	enable_mouse(&mdec);
-
 	/* make memory management table */
 	memtotal = memtest(0x00400000, 0xbfffffff);
 	memman_init(memman);
@@ -77,14 +82,13 @@ void main()
 	
 	for (;;) {
 
-		count++;
-		sprint(s, "%d", count);
+		sprint(s, "%d", timerctl.count);
 		boxfill8(buf_win, 160, COL8_C6C6C6, 40, 28, 119, 43);
 		putfonts8_asc(buf_win, 160, 40, 28, COL8_000000, s);
 		sheet_refresh(sht_win, 40, 28, 120, 44);
 
 		io_cli();
-		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) == 0){
+		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) == 0 + fifo8_status(&timerfifo) == 0){
 			io_sti();
 		}else{
 			if(fifo8_status(&keyfifo) != 0){
@@ -134,7 +138,12 @@ void main()
 					sheet_refresh(sht_back, 0, 0, 80, 16);
 					sheet_slide(sht_mouse, mx, my);			
 				}
-			}
+			}/*else if (fifo8_status(&timerfifo) != 0) {
+				unsigned char data = fifo8_get(&timerfifo);
+				io_sti();
+				putfonts8_asc(buf_back, binfo->scrnx, 0, 64, COL8_FFFFFF, "10[sec]");
+				sheet_refresh(sht_back, 0, 64, 56, 80);
+			}*/
 		}
 	}
 }

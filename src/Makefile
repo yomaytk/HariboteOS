@@ -28,7 +28,7 @@ hankaku.c : convert_hankaku.out hankaku.txt Makefile
 
 bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
-	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c sheet.c nasmfunc.o -o bootpack.o
+	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c sheet.c timer.c nasmfunc.o -o bootpack.o
 
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
@@ -55,7 +55,6 @@ clean :
 	-$(DEL) *.lst
 	-$(DEL) *.gas
 	-$(DEL)	*.o
-	-$(DEL) *.asm
 	-$(DEL) *.img
 	-$(DEL) bootpack.map
 	-$(DEL) bootpack.hrb

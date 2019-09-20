@@ -55,3 +55,17 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
 	}
 	return -1; /* ‚±‚±‚É—ˆ‚é‚±‚Æ‚Í‚È‚¢‚Í‚¸ */
 }
+
+struct FIFO8 mousefifo;
+
+void inthandler2c(int *esp)
+/* PS/2ƒ}ƒEƒX‚©‚ç‚ÌŠ„‚è‚İ */
+{
+	unsigned char data;
+	io_out8(PIC1_OCW2, 0x64);
+	io_out8(PIC0_OCW2, 0x62);
+	data = io_in8(PORT_KEYDAT);
+	fifo8_put(&mousefifo, data);
+	
+	return;
+}
