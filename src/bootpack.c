@@ -21,17 +21,17 @@ void main()
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
 	io_sti(); 				/* IDT/PICの初期化が終わったのでCPUの割り込み禁止を解除 */
+	init_pit();
 	fifo8_init(&keyfifo, 32, keybuf);				// FIFO keyboard initialization
 	fifo8_init(&mousefifo, 128, mousebuf);			// FIFO mouse initialization
-	// init_pit();
-	io_out8(PIC0_IMR, 0xf9); /* PITとPIC1とキーボードを許可(11111000) */
+	fifo8_init(&timerfifo, 8, timerbuf);			// FIFO timer initilization
+	io_out8(PIC0_IMR, 0xf8); 			// PIC1とキーボードを許可(11111001)
 	io_out8(PIC1_IMR, 0xef); 			// マウスを許可(11101111)
-
-	// fifo8_init(&timerfifo, 8, timerbuf);
-	// settimer(300, &timerfifo, 1);
 
 	init_keyboard();
 	enable_mouse(&mdec);
+	settimer(300, &timerfifo, 1);
+
 	/* make memory management table */
 	memtotal = memtest(0x00400000, 0xbfffffff);
 	memman_init(memman);
@@ -88,7 +88,7 @@ void main()
 		sheet_refresh(sht_win, 40, 28, 120, 44);
 
 		io_cli();
-		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) == 0 + fifo8_status(&timerfifo) == 0){
+		if(fifo8_status(&keyfifo) + fifo8_status(&mousefifo) + fifo8_status(&timerfifo) == 0){
 			io_sti();
 		}else{
 			if(fifo8_status(&keyfifo) != 0){
@@ -138,12 +138,12 @@ void main()
 					sheet_refresh(sht_back, 0, 0, 80, 16);
 					sheet_slide(sht_mouse, mx, my);			
 				}
-			}/*else if (fifo8_status(&timerfifo) != 0) {
-				unsigned char data = fifo8_get(&timerfifo);
+			}else if(fifo8_status(&timerfifo) != 0){
+				unsigned int data = fifo8_get(&timerfifo);
 				io_sti();
-				putfonts8_asc(buf_back, binfo->scrnx, 0, 64, COL8_FFFFFF, "10[sec]");
+				putfonts8_asc(buf_back, binfo->scrnx, 0, 64, COL8_FFFFFF, "3[sec]");
 				sheet_refresh(sht_back, 0, 64, 56, 80);
-			}*/
+			}
 		}
 	}
 }
