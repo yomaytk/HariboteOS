@@ -34,6 +34,9 @@ void main(){
 		'2', '3', '0', '.'
 	};
 	int cursor_x = 8, cursor_c = COL8_FFFFFF;
+	/* slide window */
+	char sliding_flag = 0;
+	int dx, dy; 
 
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
@@ -159,8 +162,16 @@ void main(){
 					putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);					
 					sheet_slide(sht_mouse, mx, my);
 					/* slide window by mouse */
-					if ((mdec.btn & 0x01) != 0) {
-						sheet_slide(sht_win, mx - 80, my - 8);
+					if ((mdec.btn & 0x01) != 0 && (sliding_flag == 1 || (sht_win->vx0 <= mx && 
+							mx <= sht_win->vx0+sht_win->bxsize && sht_win->vy0 <= my && my <= sht_win->vy0+sht_win->bysize))) {
+						if(sliding_flag == 0){
+							sliding_flag = 1;
+							dx = mx - sht_win->vx0;
+							dy = my - sht_win->vy0;
+						}
+						sheet_slide(sht_win, mx - dx, my - dy);
+					}else if(sliding_flag == 1){
+						sliding_flag = 0;
 					}
 				}
 			}else if(data == 10){
