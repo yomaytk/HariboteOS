@@ -33,38 +33,6 @@ unsigned int memtest_sub(unsigned int start, unsigned int end);
 void mts_loop();
 void mts_fin();
 
-
-/*===== graphic.c =====*/
-
-#define COL8_000000		0
-#define COL8_FF0000		1
-#define COL8_00FF00		2
-#define COL8_FFFF00		3
-#define COL8_0000FF		4
-#define COL8_FF00FF		5
-#define COL8_00FFFF		6
-#define COL8_FFFFFF		7
-#define COL8_C6C6C6		8
-#define COL8_840000		9
-#define COL8_008400		10
-#define COL8_848400		11
-#define COL8_000084		12
-#define COL8_840084		13
-#define COL8_008484		14
-#define COL8_848484		15
-
-void init_palette();
-void set_palette(int start, int end, unsigned char *rgb);
-void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
-void init_screen8(char *vram, int x, int y);
-void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
-void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
-void sprint(char *ss, char *s, ...);
-void init_mouse_cursor8(char *mouse, char bc);
-void putblock8_8(char *vram, int vxsize, int pxsize,
-	int pysize, int px0, int py0, char *buf, int bxsize);
-void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
-
 /*===== dsctbl.c =====*/
 
 struct SEGMENT_DESCRIPTOR {
@@ -208,6 +176,38 @@ void sheet_slide(struct SHEET *sht, int vx0, int vy0);
 void sheet_free(struct SHEET *sht);
 void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, char *s, int l);
 
+/*===== graphic.c =====*/
+
+#define COL8_000000		0
+#define COL8_FF0000		1
+#define COL8_00FF00		2
+#define COL8_FFFF00		3
+#define COL8_0000FF		4
+#define COL8_FF00FF		5
+#define COL8_00FFFF		6
+#define COL8_FFFFFF		7
+#define COL8_C6C6C6		8
+#define COL8_840000		9
+#define COL8_008400		10
+#define COL8_848400		11
+#define COL8_000084		12
+#define COL8_840084		13
+#define COL8_008484		14
+#define COL8_848484		15
+
+void init_palette();
+void set_palette(int start, int end, unsigned char *rgb);
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
+void init_screen8(char *vram, int x, int y);
+void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
+void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
+void sprint(char *ss, char *s, ...);
+void init_mouse_cursor8(char *mouse, char bc);
+void putblock8_8(char *vram, int vxsize, int pxsize,
+	int pysize, int px0, int py0, char *buf, int bxsize);
+void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
+void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
+
 /* ===== timer.c ===== */
 
 #define PIT_CTRL	0x0043
@@ -215,13 +215,14 @@ void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, char *s, i
 #define MAX_TIMER	500
 
 struct TIMER {
+	struct TIMER *next;
 	unsigned int timeout, flags;
 	struct FIFO32 *fifo;
 	unsigned char data;
 };
 struct TIMERCTL {
-	unsigned int count, nexttime, using;
-	struct TIMER *timers[MAX_TIMER];
+	unsigned int count, nexttime;
+	struct TIMER *t0;
 	struct TIMER timers0[MAX_TIMER];
 };
 
@@ -233,3 +234,4 @@ void timer_free(struct TIMER *timer);
 void timer_init(struct TIMER *timer, struct FIFO32 *fifo, unsigned char data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
+void set490(struct FIFO32 *fifo, int mode);

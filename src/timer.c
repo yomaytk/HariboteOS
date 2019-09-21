@@ -13,6 +13,7 @@ struct TIMERCTL timerctl;
 void init_pit(void)
 {
 	int i;
+	struct TIMER *t;
 	io_out8(PIT_CTRL, 0x34);
 	io_out8(PIT_CNT0, 0x9c);
 	io_out8(PIT_CNT0, 0x2e);
@@ -21,6 +22,11 @@ void init_pit(void)
 	for (i = 0; i < MAX_TIMER; i++) {
 		timerctl.timers0[i].flags = 0; /* 未使用 */
 	}
+	t = timer_alloc();
+	t->next = 0;
+	t->timeout = 0xffffffff;
+	t->flags = TIMER_FLAGS_USING;
+	timerctl.t0 = t;
 	return;
 }
 
@@ -51,48 +57,69 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, unsigned char data)
 
 void timer_settime(struct TIMER *timer, unsigned int timeout)
 {
-	int e, i, j;
+	int e;
+	struct TIMER *t, *s;
 	timer->timeout = timeout + timerctl.count;
 	timer->flags = TIMER_FLAGS_USING;
 	e = io_load_eflags();
 	io_cli();
-	for (i = 0; i < timerctl.using; i++) {
-		if (timerctl.timers[i]->timeout >= timer->timeout) {
-			break;
+	t = timerctl.t0;
+	if (timer->timeout <= t->timeout) {
+		/* insert top */
+		timerctl.t0 = timer;
+		timer->next = t;
+		timerctl.nexttime = timer->timeout;
+		io_store_eflags(e);
+		return;
+	}
+	for (;;) {
+		s = t;
+		t = t->next;
+		if (timer->timeout <= t->timeout) {
+			/* s -> timer -> t */
+			s->next = timer;
+			timer->next = t;
+			io_store_eflags(e);
+			return;
 		}
 	}
-	for (j = timerctl.using; j > i; j--) {
-		timerctl.timers[j] = timerctl.timers[j - 1];
-	}
-	timerctl.using++;
-	timerctl.timers[i] = timer;
-	timerctl.nexttime = timerctl.timers[0]->timeout;
-	io_store_eflags(e);
 	return;
 }
 
 void inthandler20(int *esp)
 {
 	int i;
+	struct TIMER *timer;
 	io_out8(PIC0_OCW2, 0x60);	/* IRQ-00受付完了をPICに通知 */
 	timerctl.count++;
-	if(timerctl.nexttime > timerctl.count)	return;
-	timerctl.nexttime = 0xffffffff;
-	for (i = 0; i < timerctl.using; i++) {
-		struct TIMER *tim = timerctl.timers[i];
-		if(tim->timeout > timerctl.count)	break;
-		/* timeout! */
-		tim->flags = TIMER_FLAGS_ALLOC;
-		fifo32_put(tim->fifo, tim->data);
+	if (timerctl.nexttime > timerctl.count) {
+		return;
 	}
-	timerctl.using -= i;
-	for(int j = 0;j < timerctl.using;j++){
-		timerctl.timers[j] = timerctl.timers[i+j];
+	timer = timerctl.t0;
+	for (;;) {
+		if (timer->timeout > timerctl.count) {
+			break;
+		}
+		/* timeout */
+		timer->flags = TIMER_FLAGS_ALLOC;
+		fifo32_put(timer->fifo, timer->data);
+		timer = timer->next; /* 次のタイマの番地をtimerに代入 */
 	}
-	if(timerctl.using > 0){
-		timerctl.nexttime = timerctl.timers[0]->timeout;
-	}else{
-		timerctl.nexttime = 0xffffffff;
+	timerctl.t0 = timer;
+	timerctl.nexttime = timerctl.t0->timeout;
+	return;
+}
+
+void set490(struct FIFO32 *fifo, int mode)
+{
+	int i;
+	struct TIMER *timer;
+	if (mode != 0) {
+		for (i = 0; i < 490; i++) {
+			timer = timer_alloc();
+			timer_init(timer, fifo, 1024 + i);
+			timer_settime(timer, 100 * 60 * 60 * 24 * 50 + i * 100);
+		}
 	}
 	return;
 }

@@ -26,22 +26,97 @@ VRAM    EQU     0x0ff8      ; VIDEO RAM  | グラフィックバッファの開始番地
         ;     0x13：VGAグラフィックス、320x200x8bitカラー、パックドピクセル
         ;     0x6a：拡張VGAグラフィックス、800x600x4bitカラー、独自プレーンアクセス（ビデオカードによってはサポートされない）
         ;   戻り値：なし
-        MOV     AL, 0x13    ; VGA graphics, 320x200x(8 bit color)
-        MOV     AH, 0x00
-        INT     0x10
+VBEMODE	EQU		0x105			; 1024 x  768 x 8bitカラー
+; （画面モード一覧）
+;	0x100 :  640 x  400 x 8bitカラー
+;	0x101 :  640 x  480 x 8bitカラー
+;	0x103 :  800 x  600 x 8bitカラー
+;	0x105 : 1024 x  768 x 8bitカラー
+;	0x107 : 1280 x 1024 x 8bitカラー
+
+; VBE存在確認
+		JMP		scrn320
+		MOV		AX,0x9000
+		MOV		ES,AX
+		MOV		DI,0
+		MOV		AX,0x4f00
+		INT		0x10
+		CMP		AX,0x004f
+		JNE		scrn320
+
+; VBEのバージョンチェック
+
+		MOV		AX,[ES:DI+4]
+		CMP		AX,0x0200
+		JB		scrn320			; if (AX < 0x0200) goto scrn320
+
+; 画面モード情報を得る
+
+		MOV		CX,VBEMODE
+		MOV		AX,0x4f01
+		INT		0x10
+		CMP		AX,0x004f
+		JNE		scrn320
+
+; 画面モード情報の確認
+
+		CMP		BYTE [ES:DI+0x19],8
+		JNE		scrn320
+		CMP		BYTE [ES:DI+0x1b],4
+		JNE		scrn320
+		MOV		AX,[ES:DI+0x00]
+		AND		AX,0x0080
+		JZ		scrn320			; モード属性のbit7が0だったのであきらめる
+
+; 画面モードの切り替え
+
+		MOV		BX,VBEMODE+0x4000
+		MOV		AX,0x4f02
+		INT		0x10
+		MOV		BYTE [VMODE],8	; 画面モードをメモする（C言語が参照する）
+		MOV		AX,[ES:DI+0x12]
+		MOV		[SCRNX],AX
+		MOV		AX,[ES:DI+0x14]
+		MOV		[SCRNY],AX
+		MOV		EAX,[ES:DI+0x28]
+		MOV		[VRAM],EAX
+		JMP		keystatus
+
+scrn320:
+		MOV		AL,0x13			; VGAグラフィックス、320x200x8bitカラー
+		MOV		AH,0x00
+		INT		0x10
+		MOV		BYTE [VMODE],8	; 画面モードをメモする（C言語が参照する）
+		MOV		WORD [SCRNX],320
+		MOV		WORD [SCRNY],200
+		MOV		DWORD [VRAM],0x000a0000
+		JMP		keystatus
+
+; キーボードのLED状態をBIOSに教えてもらう
+
+keystatus:
+		MOV		AH,0x02
+		INT		0x16 			; keyboard BIOS
+		MOV		[LEDS],AL
+
+		; MOV		BX,0x4101		; VBEの640x480x8bitカラー
+		; MOV		AX,0x4f02
+        ; MOV     AL, 0x12    ; VGA graphics, 320x200x(8 bit color)
+        ; MOV     AH, 0x00
+        ; INT     0x10
 
         ;=======================================================================
         ; 画面モードをメモする
-        MOV     BYTE [VMODE], 8           ; Video MODE
-        MOV     WORD [SCRNX], 320         ; SCReeN X
-        MOV     WORD [SCRNY], 200         ; SCReeN Y
-        MOV     DWORD [VRAM], 0x000a0000  ; Video RAM
-                                          ; > VRAMは0xa0000～0xaffffの64KBです。厳密に言うと、320x200=64000なので、62.5KBですが.
-                                          ;
-                                          ; > [VRAM]に 0xa0000 を入れているのですが、PC の世界で VRAM というのはビデオラムのことで
-                                          ; > 「video RAM」と書き、画面用のメモリのことです。このメモリは、もちろんデータを記憶することがい
-                                          ; > つも通りできます。しかしVRAMは普通のメモリ以上の存在で、それぞれの番地が画面上の画素に対応
-                                          ; > していて、これを利用することで画面に絵を出すことができるのです。
+        ; MOV     BYTE [VMODE], 8           ; Video MODE
+        ; MOV     WORD [SCRNX], 640        ; SCReeN X
+        ; MOV     WORD [SCRNY], 480         ; SCReeN Y
+        ; MOV     DWORD [VRAM], 0x000a0000  ; Video RAM
+										; > VRAMは0xa0000～0xaffffの64KBです。厳密に言うと、320x200=64000なので、62.5KBですが.
+										;
+										; > [VRAM]に 0xa0000 を入れているのですが、PC の世界で VRAM というのはビデオラムのことで
+										; > 「video RAM」と書き、画面用のメモリのことです。このメモリは、もちろんデータを記憶することがい
+										; > つも通りできます。しかしVRAMは普通のメモリ以上の存在で、それぞれの番地が画面上の画素に対応
+										; > していて、これを利用することで画面に絵を出すことができるのです。
 
         ;=======================================================================
         ; [INT(0x16); キーボード関係 - (AT)BIOS - os-wiki](http://oswiki.osask.jp/?%28AT%29BIOS#lb9f3e72)
@@ -58,9 +133,9 @@ VRAM    EQU     0x0ff8      ; VIDEO RAM  | グラフィックバッファの開始番地
         ;     bit6：Capsロック
         ;     bit7：Insertモード
         ; BIOS (16 bit mode) から情報を取得
-        MOV     AH, 0x02    ; キーロック＆シフト状態取得
-        INT     0x16        ; Keyboard BIOS
-        MOV     [LEDS], AL  ; LED State
+        ; MOV     AH, 0x02    ; キーロック＆シフト状態取得
+        ; INT     0x16        ; Keyboard BIOS
+        ; MOV     [LEDS], AL  ; LED State
 
         ; PICが一切の割り込みを受け付けないようにする
         ; AT互換機の仕様では、PICの初期化をするなら、

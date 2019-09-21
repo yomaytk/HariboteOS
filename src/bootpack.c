@@ -24,6 +24,16 @@ void main(){
 	struct TIMER *timer, *timer2, *timer3;
 	/* counter */
 	unsigned int count = 0;
+	/* keyboard */
+	static char keytable[0x54] = {
+		0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^', 0,   0,
+		'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '@', '[', 0,   0,   'A', 'S',
+		'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', ':', 0,   0,   ']', 'Z', 'X', 'C', 'V',
+		'B', 'N', 'M', ',', '.', '/', 0,   '*', 0,   ' ', 0,   0,   0,   0,   0,   0,
+		0,   0,   0,   0,   0,   0,   0,   '7', '8', '9', '-', '4', '5', '6', '+', '1',
+		'2', '3', '0', '.'
+	};
+	int cursor_x = 8, cursor_c = COL8_FFFFFF;
 
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
@@ -35,6 +45,7 @@ void main(){
 	io_out8(PIC0_IMR, 0xf8); 			// PIC1とキーボードを許可(11111000)
 	io_out8(PIC1_IMR, 0xef); 			// マウスを許可(11101111)
 
+	set490(&fifo, 1);
 	timer = timer_alloc();
 	timer_init(timer, &fifo, 10);
 	timer_settime(timer, 1000);
@@ -64,7 +75,8 @@ void main(){
 	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, 99);
 	sheet_setbuf(sht_win, buf_win, 160, 52, -1);
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);		// screen initialization
-	make_window8(buf_win, 160, 52, "counter");
+	make_window8(buf_win, 160, 52, "window");
+	make_textbox8(sht_win, 8, 28, 144, 16, COL8_FFFFFF);
 
 	/* mouse cursor default*/
 	int mx = (binfo->scrnx - 16) / 2; 
@@ -90,21 +102,33 @@ void main(){
 
 	for (;;) {
 
-		count++;
-		for(int k = 0;k < 1300;k++);
+		for(int k = 0;k < 1100;k++);
 
 		io_cli();
 		if(fifo32_status(&fifo) == 0){
-			io_sti();
+			io_stihlt();
 		}else{
 			int data = fifo32_get(&fifo);
 			io_sti();
 			if(256 <= data && data <= 511){
 				char s[40];
-				sprint(s, "%x", data);
+				sprint(s, "%x", data - 256);
 				putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
+				if (data == 256 + 0x0e && cursor_x > 8) { /* back space key */
+					putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, " ", 1);
+					cursor_x -= 8;
+				}else if (data < 0x54 + 256) {
+					if (keytable[data - 256] != 0 && cursor_x < 144) { /* normal character */
+						s[0] = keytable[data - 256];
+						s[1] = 0;
+						putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, s, 1);
+						cursor_x += 8;
+					}
+				}
+				boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+				sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
 			}else if(512 <= data && data <= 767){
-				if (mouse_decode(&mdec, data) != 0) {
+				if (mouse_decode(&mdec, data-512) != 0) {
 					sprint(s, "[lcr %d %d]", mdec.x, mdec.y);
 					if ((mdec.btn & 0x01) != 0) {
 						s[1] = 'L';
@@ -133,25 +157,27 @@ void main(){
 					}
 					sprint(s, "(%d, %d)", mx, my);
 					putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);					
-					sheet_slide(sht_mouse, mx, my);			
+					sheet_slide(sht_mouse, mx, my);
+					/* slide window by mouse */
+					if ((mdec.btn & 0x01) != 0) {
+						sheet_slide(sht_win, mx - 80, my - 8);
+					}
 				}
 			}else if(data == 10){
 				putfonts8_asc_sht(sht_back, 0, 64, COL8_FFFFFF, COL8_008484, "10[sec]", 7);	
-				sprint(s, "%d", count);
-				putfonts8_asc_sht(sht_win, 40, 28, COL8_000000, COL8_C6C6C6, s, 10);
 			}else if(data == 3){
 				putfonts8_asc_sht(sht_back, 0, 80, COL8_FFFFFF, COL8_008484, "3[sec]", 6);
-				count = 0;
-			}else if(data == 1){
-				timer_init(timer3, &fifo, 0);
-				boxfill8(buf_back, binfo->scrnx, COL8_FFFFFF, 8, 96, 15, 111);
+			}else if (data <= 1) {
+				if (data != 0) {
+					timer_init(timer3, &fifo, 0);
+					cursor_c = COL8_000000;
+				} else {
+					timer_init(timer3, &fifo, 1);
+					cursor_c = COL8_FFFFFF;
+				}
 				timer_settime(timer3, 50);
-				sheet_refresh(sht_back, 8, 96, 16, 112);
-			}else if(data == 0){
-				timer_init(timer3, &fifo, 1);
-				boxfill8(buf_back, binfo->scrnx, COL8_008484, 8, 96, 15, 111);
-				timer_settime(timer3, 50);
-				sheet_refresh(sht_back, 8, 96, 16, 112);
+				boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+				sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
 			}
 		}
 	}
