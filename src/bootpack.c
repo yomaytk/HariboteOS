@@ -113,7 +113,6 @@ void main(){
 	set_segmdesc(gdt + 4, 103, (int) &tss_b, AR_TSS32);
 	load_tr(3 * 8);
 	int task_b_esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
-	*((int *) task_b_esp + 4) = (int) sht_back;		// to share sheet with other TSS
 	tss_b.eip = (int) &task_b_main;
 	tss_b.eflags = 0x00000202; /* IF = 1; */
 	tss_b.eax = 0;
@@ -130,6 +129,7 @@ void main(){
 	tss_b.ds = 1 * 8;
 	tss_b.fs = 1 * 8;
 	tss_b.gs = 1 * 8;
+	*((int *) (task_b_esp + 4)) = (int) sht_back;		// to share sheet with other TSS
 
 	sprint(s, "debug: %d", tss_b.esp);
 	putfonts8_asc(buf_back, binfo->scrnx, 0, 155, COL8_FFFFFF, s);	
@@ -138,7 +138,7 @@ void main(){
 
 	for (;;) {
 
-		for(int k = 0;k < 1100;k++);
+		// for(int k = 0;k < 1100;k++);
 
 		io_cli();
 		if(fifo32_status(&fifo) == 0){
