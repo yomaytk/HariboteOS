@@ -240,7 +240,7 @@ void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
 void set490(struct FIFO32 *fifo, int mode);
 
-/* ===== tss.c ===== */
+/* ===== taskfunc.c ===== */
 
 struct TSS32 {
 	int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
@@ -249,3 +249,10 @@ struct TSS32 {
 	int ldtr, iomap;
 };
 void task_b_main(struct SHEET *sht_back);
+
+/* ===== mtask.c ===== */
+
+extern struct TIMER *mt_timer;
+
+void mt_init();
+void mt_taskswitch();

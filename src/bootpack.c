@@ -21,7 +21,7 @@ void main(){
 	struct SHEET *sht_back, *sht_mouse, *sht_win;
 	unsigned char *buf_back, *buf_mouse, *buf_win;
 	/* timer */
-	struct TIMER *timer, *timer2, *timer3, *timer_ts;
+	struct TIMER *timer, *timer2, *timer3;
 	/* counter */
 	unsigned int count = 0;
 	/* keyboard */
@@ -61,9 +61,6 @@ void main(){
 	timer3 = timer_alloc();
 	timer_init(timer3, &fifo, 1);
 	timer_settime(timer3, 50);
-	timer_ts = timer_alloc();
-	timer_init(timer_ts, &fifo, 2);
-	timer_settime(timer_ts, 2);
 
 	/* make memory management table */
 	memtotal = memtest(0x00400000, 0xbfffffff);
@@ -135,21 +132,18 @@ void main(){
 	putfonts8_asc(buf_back, binfo->scrnx, 0, 155, COL8_FFFFFF, s);	
 	sheet_refresh(sht_back, 0, 0, binfo->scrnx, binfo->scrny);
 
+	mt_init();	// multiple task timer
 
 	for (;;) {
 
-		// for(int k = 0;k < 1100;k++);
-
+		// for(int i = 0;i < 1000;i++);
 		io_cli();
 		if(fifo32_status(&fifo) == 0){
 			io_stihlt();
 		}else{
 			int data = fifo32_get(&fifo);
 			io_sti();
-			if(data == 2){
-				farjmp(0, 4 * 8);
-				timer_settime(timer_ts, 2);
-			}else if(256 <= data && data <= 511){
+			if(256 <= data && data <= 511){
 				char s[40];
 				sprint(s, "%x", data - 256);
 				putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
