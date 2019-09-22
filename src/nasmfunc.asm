@@ -14,6 +14,8 @@
 		global	asm_inthandler21, asm_inthandler27, asm_inthandler2c
 		global  asm_inthandler20
 		global	load_cr0, store_cr0
+		global  load_tr
+		global	farjmp
 		global	memtest_sub, mts_loop, mts_fin
 		extern	inthandler21, inthandler27, inthandler2c, inthandler20
 
@@ -104,6 +106,10 @@ store_cr0:		; void store_cr0(int cr0);
 		MOV		CR0,EAX
 		RET
 
+load_tr:		; void load_tr(int tr);
+		LTR		[ESP+4]			; tr
+		RET
+
 asm_inthandler21:
 		PUSH	ES
 		PUSH	DS
@@ -175,6 +181,7 @@ memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		MOV		ESI,0xaa55aa55			; pat0 = 0xaa55aa55;
 		MOV		EDI,0x55aa55aa			; pat1 = 0x55aa55aa;
 		MOV		EAX,[ESP+12+4]			; i = start;
+
 mts_loop:
 		MOV		EBX,EAX
 		ADD		EBX,0xffc				; p = i + 0xffc;
@@ -194,9 +201,15 @@ mts_loop:
 		POP		ESI
 		POP		EDI
 		RET
+
 mts_fin:
 		MOV		[EBX],EDX				; *p = old;
 		POP		EBX
 		POP		ESI
 		POP		EDI
 		RET
+
+farjmp:		; void farjmp(int eip, int cs);
+		JMP		FAR	[ESP+4]				; eip, cs
+		RET
+

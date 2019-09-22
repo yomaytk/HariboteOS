@@ -24,6 +24,7 @@ void io_store_eflags(int eflags);
 void load_gdtr(int limit, int addr);
 void load_idtr(int limit, int addr);
 unsigned int load_cr0();
+void load_tr(int tr);
 void store_cr0(int cr0);
 void asm_inthandler21();
 void asm_inthandler27();
@@ -32,6 +33,7 @@ void asm_inthandler20();
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void mts_loop();
 void mts_fin();
+void farjmp(int eip, int cs);
 
 /*===== dsctbl.c =====*/
 
@@ -58,7 +60,9 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define LIMIT_BOTPAK	0x0007ffff
 #define AR_DATA32_RW	0x4092
 #define AR_CODE32_ER	0x409a
+#define AR_TSS32		0x0089
 #define AR_INTGATE32	0x008e
+
 
 /*===== fifo.c =====*/
 
@@ -235,3 +239,13 @@ void timer_init(struct TIMER *timer, struct FIFO32 *fifo, unsigned char data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
 void set490(struct FIFO32 *fifo, int mode);
+
+/* ===== tss.c ===== */
+
+struct TSS32 {
+	int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
+	int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+	int es, cs, ss, ds, fs, gs;
+	int ldtr, iomap;
+};
+void task_b_main(struct SHEET *sht_back);

@@ -21,7 +21,7 @@ void main(){
 	struct SHEET *sht_back, *sht_mouse, *sht_win;
 	unsigned char *buf_back, *buf_mouse, *buf_win;
 	/* timer */
-	struct TIMER *timer, *timer2, *timer3;
+	struct TIMER *timer, *timer2, *timer3, *timer_ts;
 	/* counter */
 	unsigned int count = 0;
 	/* keyboard */
@@ -36,7 +36,10 @@ void main(){
 	int cursor_x = 8, cursor_c = COL8_FFFFFF;
 	/* slide window */
 	char sliding_flag = 0;
-	int dx, dy; 
+	int dx, dy;
+	/* TSS */
+	struct TSS32 tss_a, tss_b;
+	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
@@ -58,6 +61,9 @@ void main(){
 	timer3 = timer_alloc();
 	timer_init(timer3, &fifo, 1);
 	timer_settime(timer3, 50);
+	timer_ts = timer_alloc();
+	timer_init(timer_ts, &fifo, 2);
+	timer_settime(timer_ts, 2);
 
 	/* make memory management table */
 	memtotal = memtest(0x00400000, 0xbfffffff);
@@ -98,10 +104,37 @@ void main(){
 	sprint(s, "memory %dMB   free : %dKB",
 			memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfonts8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-	sprint(s, "debug: %d", 10);
-	putfonts8_asc(buf_back, binfo->scrnx, 0, 155, COL8_FFFFFF, s);	
 	
+	tss_a.ldtr = 0;
+	tss_a.iomap = 0x40000000;
+	tss_b.ldtr = 0;
+	tss_b.iomap = 0x40000000;
+	set_segmdesc(gdt + 3, 103, (int) &tss_a, AR_TSS32);
+	set_segmdesc(gdt + 4, 103, (int) &tss_b, AR_TSS32);
+	load_tr(3 * 8);
+	int task_b_esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
+	*((int *) task_b_esp + 4) = (int) sht_back;		// to share sheet with other TSS
+	tss_b.eip = (int) &task_b_main;
+	tss_b.eflags = 0x00000202; /* IF = 1; */
+	tss_b.eax = 0;
+	tss_b.ecx = 0;
+	tss_b.edx = 0;
+	tss_b.ebx = 0;
+	tss_b.esp = task_b_esp;
+	tss_b.ebp = 0;
+	tss_b.esi = 0;
+	tss_b.edi = 0;
+	tss_b.es = 1 * 8;
+	tss_b.cs = 2 * 8;
+	tss_b.ss = 1 * 8;
+	tss_b.ds = 1 * 8;
+	tss_b.fs = 1 * 8;
+	tss_b.gs = 1 * 8;
+
+	sprint(s, "debug: %d", tss_b.esp);
+	putfonts8_asc(buf_back, binfo->scrnx, 0, 155, COL8_FFFFFF, s);	
 	sheet_refresh(sht_back, 0, 0, binfo->scrnx, binfo->scrny);
+
 
 	for (;;) {
 
@@ -113,7 +146,10 @@ void main(){
 		}else{
 			int data = fifo32_get(&fifo);
 			io_sti();
-			if(256 <= data && data <= 511){
+			if(data == 2){
+				farjmp(0, 4 * 8);
+				timer_settime(timer_ts, 2);
+			}else if(256 <= data && data <= 511){
 				char s[40];
 				sprint(s, "%x", data - 256);
 				putfonts8_asc_sht(sht_back, 0, 16, COL8_FFFFFF, COL8_008484, s, 2);
