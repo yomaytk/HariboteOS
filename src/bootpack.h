@@ -71,9 +71,10 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 struct FIFO32{
 	int *buf;
 	int p, q, size, free, flags;
+	struct TASK *task;
 };
 
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task);
 int fifo32_put(struct FIFO32 *fifo, int data);
 int fifo32_get(struct FIFO32 *fifo);
 int fifo32_status(struct FIFO32 *fifo);
@@ -242,17 +243,31 @@ void set490(struct FIFO32 *fifo, int mode);
 
 /* ===== taskfunc.c ===== */
 
+void task_b_main(struct SHEET *sht_back);
+
+/* ===== mtask.c ===== */
+
+#define MAX_TASKS		1000	
+#define TASK_GDT0		3		/* TSS assigned from GDT number 3 */
 struct TSS32 {
 	int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
 	int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
 	int es, cs, ss, ds, fs, gs;
 	int ldtr, iomap;
 };
-void task_b_main(struct SHEET *sht_back);
-
-/* ===== mtask.c ===== */
-
-extern struct TIMER *mt_timer;
-
-void mt_init();
-void mt_taskswitch();
+struct TASK {
+	int sel, flags; /* sel is GDT number(0*8, 1*8, 2*8,...) */
+	struct TSS32 tss;
+};
+struct TASKCTL {
+	int running; /* count of running task */
+	int now; /* number of task running now */
+	struct TASK *tasks[MAX_TASKS];
+	struct TASK tasks0[MAX_TASKS];
+};
+extern struct TIMER *task_timer;
+struct TASK *task_init(struct MEMMAN *memman);
+struct TASK *task_alloc(void);
+void task_run(struct TASK *task);
+void task_switch(void);
+void task_sleep(struct TASK *task);

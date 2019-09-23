@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include"bootpack.h"
 
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf){	// unsigned char *buf ???
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task){	// unsigned char *buf ???
 	
 	fifo->buf = buf;	
 	fifo->p = 0;
@@ -9,7 +9,7 @@ void fifo32_init(struct FIFO32 *fifo, int size, int *buf){	// unsigned char *buf
 	fifo->size = size;
 	fifo->free = size;
 	fifo->flags = 0;
-	
+	fifo->task = task;
 	return;
 }
 
@@ -23,6 +23,11 @@ int fifo32_put(struct FIFO32 *fifo, int data){	// unsigned char data ???
 	fifo->free--;
 	if(fifo->p == fifo->size){
 		fifo->p = 0;
+	}
+	if(fifo->task != 0){
+		if(fifo->task->flags != 2){
+			task_run(fifo->task);
+		}
 	}
 	return 1;
 }

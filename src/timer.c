@@ -102,17 +102,17 @@ void inthandler20(int *esp)
 		}
 		/* timeout */
 		timer->flags = TIMER_FLAGS_ALLOC;
-		if(timer != mt_timer){
+		if(timer != task_timer){
 			fifo32_put(timer->fifo, timer->data);
 		}else{
-			ts = 1;	// mt_timer timeout
+			ts = 1;	// task_timer timeout
 		}
 		timer = timer->next; /* 次のタイマの番地をtimerに代入 */
 	}
 	timerctl.t0 = timer;
 	timerctl.nexttime = timerctl.t0->timeout;
 	if(ts != 0){
-		mt_taskswitch();
+		task_switch();
 	}
 	return;
 }
