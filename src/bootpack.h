@@ -210,7 +210,7 @@ void sprint(char *ss, char *s, ...);
 void init_mouse_cursor8(char *mouse, char bc);
 void putblock8_8(char *vram, int vxsize, int pxsize,
 	int pysize, int px0, int py0, char *buf, int bxsize);
-void make_window8(unsigned char *buf, int xsize, int ysize, char *title);
+void make_window8(unsigned char *buf, int xsize, int ysize, char *title, char act);
 void make_textbox8(struct SHEET *sht, int x0, int y0, int sx, int sy, int c);
 
 /* ===== timer.c ===== */
@@ -243,7 +243,7 @@ void set490(struct FIFO32 *fifo, int mode);
 
 /* ===== taskfunc.c ===== */
 
-void task_b_main(struct SHEET *sht_back);
+void task_b_main(struct SHEET *sht_win_b);
 
 /* ===== mtask.c ===== */
 
