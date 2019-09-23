@@ -60,6 +60,7 @@ void main(){
 	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
 	task_a = task_init(memman);
 	fifo.task = task_a;
+	task_run(task_a, 1, 0);
 
 	/* sht_back initialization */
 	sht_back  = sheet_alloc(shtctl);
@@ -103,7 +104,7 @@ void main(){
 		task_b[i]->tss.fs = 1 * 8;
 		task_b[i]->tss.gs = 1 * 8;
 		*((int *) (task_b[i]->tss.esp + 4)) = (int) sht_win_b[i];
-		task_run(task_b[i]);
+		task_run(task_b[i], 2, i+1);
 	}
 	
 	sheet_slide(sht_back, 0, 0);
@@ -124,11 +125,15 @@ void main(){
 			memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
 
-	sprint(s, "debug: %d", taskctl->tasks[4]->sel);
+	sprint(s, "debug: %d", task_b[0]);
 	putfonts8_asc(buf_back, binfo->scrnx, 200, 0, COL8_FFFFFF, s);	
-	sheet_refresh(sht_back, 0, 0, binfo->scrnx, binfo->scrny);
-
+	sheet_refresh(sht_back, 200, 0, binfo->scrnx, 20);
+	int count = 0;
 	for (;;) {
+		// for(int i = 0;i < 1600;i++)	i = i;
+		// count++;
+		// sprint(s, "debug: %d", count);
+		// putfonts8_asc_sht(sht_back, 200, 0, COL8_FFFFFF, COL8_008484, s, 30);
 
 		io_cli();
 		if(fifo32_status(&fifo) == 0){

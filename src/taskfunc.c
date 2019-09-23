@@ -17,7 +17,7 @@ void task_b_main(struct SHEET *sht_win_b)
 
 	for (;;) {
 		count++;
-		for(int i = 0;i < 1200;i++)	i = i;
+		for(int i = 0;i < 1300;i++)	i = i;
 		io_cli();
 		if (fifo32_status(&fifo) == 0) {
 			io_sti();			// io_sti()???

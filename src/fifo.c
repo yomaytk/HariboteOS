@@ -26,10 +26,10 @@ int fifo32_put(struct FIFO32 *fifo, int data){	// unsigned char data ???
 	}
 	if(fifo->task != 0){
 		if(fifo->task->flags != 2){
-			task_run(fifo->task);
+			task_run(fifo->task, -1, 0);
 		}
 	}
-	return 1;
+	return 0;
 }
 
 int fifo32_get(struct FIFO32 *fifo){
