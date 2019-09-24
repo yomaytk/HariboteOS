@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include"bootpack.h"
 
+/* task_b */
 void task_b_main(struct SHEET *sht_win_b)
 {
 	struct FIFO32 fifo;
@@ -17,7 +18,7 @@ void task_b_main(struct SHEET *sht_win_b)
 
 	for (;;) {
 		count++;
-		for(int i = 0;i < 1300;i++)	i = i;
+		for(int i = 0;i < 1500;i++)	i = i;
 		io_cli();
 		if (fifo32_status(&fifo) == 0) {
 			io_sti();			// io_sti()???
@@ -31,5 +32,12 @@ void task_b_main(struct SHEET *sht_win_b)
 				timer_settime(timer_1s, 100);
 			}
 		}
+	}
+}
+
+/* task_idle */
+void task_idle(){
+	for(;;){
+		io_hlt();
 	}
 }

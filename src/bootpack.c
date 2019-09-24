@@ -20,8 +20,8 @@ void main(){
 	struct SHTCTL *shtctl;
 	struct SHEET *sht_back, *sht_mouse, *sht_win, *sht_win_b[3];
 	unsigned char *buf_back, *buf_mouse, *buf_win, *buf_win_b;
-	/* timer */
-	struct TIMER *timer;
+	/* cursor_timer */
+	struct TIMER *cursor_timer;
 	/* keyboard input */
 	static char keytable[0x54] = {
 		0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^', 0,   0,
@@ -83,9 +83,9 @@ void main(){
 	make_textbox8(sht_win, 8, 28, 128, 16, COL8_FFFFFF);
 	cursor_x = 8;
 	cursor_c = COL8_FFFFFF;
-	timer = timer_alloc();
-	timer_init(timer, &fifo, 1);
-	timer_settime(timer, 50);
+	cursor_timer = timer_alloc();
+	timer_init(cursor_timer, &fifo, 1);
+	timer_settime(cursor_timer, 50);
 
 	/* sht_win_b initialization*/
 	for (int i = 0; i < 3; i++) {
@@ -104,7 +104,9 @@ void main(){
 		task_b[i]->tss.fs = 1 * 8;
 		task_b[i]->tss.gs = 1 * 8;
 		*((int *) (task_b[i]->tss.esp + 4)) = (int) sht_win_b[i];
-		task_run(task_b[i], 2, i+1);
+		if(i < 2)	task_run(task_b[i], 2, i+1);
+		else 	task_run(task_b[i], 3, i+1);
+		// if(i == 0)task_run(task_b[i], MAX_TASKLEVELS-1, 1);
 	}
 	
 	sheet_slide(sht_back, 0, 0);
@@ -126,15 +128,12 @@ void main(){
 	putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
 
 	sprint(s, "debug: %d", task_b[0]);
-	putfonts8_asc(buf_back, binfo->scrnx, 200, 0, COL8_FFFFFF, s);	
-	sheet_refresh(sht_back, 200, 0, binfo->scrnx, 20);
-	int count = 0;
+	putfonts8_asc_sht(sht_back, 200, 0, COL8_FFFFFF, COL8_008484, s, 15);
+	
 	for (;;) {
-		// for(int i = 0;i < 1600;i++)	i = i;
-		// count++;
-		// sprint(s, "debug: %d", count);
-		// putfonts8_asc_sht(sht_back, 200, 0, COL8_FFFFFF, COL8_008484, s, 30);
-
+		
+		// for(int i = 0;i < 1200;i++)	i = i;
+		
 		io_cli();
 		if(fifo32_status(&fifo) == 0){
 			task_sleep(task_a);
@@ -150,7 +149,7 @@ void main(){
 					putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, " ", 1);
 					cursor_x -= 8;
 				}else if (data < 0x54 + 256) {
-					if (keytable[data - 256] != 0 && cursor_x < 144) { /* normal character */
+					if (keytable[data - 256] != 0 && cursor_x < 128) { /* normal character */
 						s[0] = keytable[data - 256];
 						s[1] = 0;
 						putfonts8_asc_sht(sht_win, cursor_x, 28, COL8_000000, COL8_FFFFFF, s, 1);
@@ -205,13 +204,13 @@ void main(){
 				}
 			}else if (data <= 1) {
 				if (data != 0) {
-					timer_init(timer, &fifo, 0);
+					timer_init(cursor_timer, &fifo, 0);
 					cursor_c = COL8_000000;
 				} else {
-					timer_init(timer, &fifo, 1);
+					timer_init(cursor_timer, &fifo, 1);
 					cursor_c = COL8_FFFFFF;
 				}
-				timer_settime(timer, 50);
+				timer_settime(cursor_timer, 50);
 				boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
 				sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
 			}

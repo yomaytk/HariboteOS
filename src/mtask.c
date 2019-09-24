@@ -17,7 +17,7 @@ struct TASK *task_now(){
 /* add task to current tasklevel */
 void task_add(struct TASK *task){
 
-	struct TASKLEVEL *tlev = &taskctl->level[taskctl->now_lv];
+	struct TASKLEVEL *tlev = &taskctl->level[task->level];
 	tlev->tasks[tlev->running] = task;
 	tlev->running++;
 	task->flags = 2;
@@ -29,7 +29,7 @@ void task_add(struct TASK *task){
 void task_remove(struct TASK *task){
 
 	int i;
-	struct TASKLEVEL *tlev = &taskctl->level[taskctl->now_lv];
+	struct TASKLEVEL *tlev = &taskctl->level[task->level];
 
 	/* find target task from tlev */
 	for(i = 0;i < tlev->running;i++){
@@ -73,7 +73,7 @@ void task_switchsub(){
 struct TASK *task_init(struct MEMMAN *memman)
 {
 	int i;
-	struct TASK *task;
+	struct TASK *task, *idle_task;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 	taskctl = (struct TASKCTL *) memman_alloc_4k(memman, sizeof (struct TASKCTL));
 	for (i = 0; i < MAX_TASKS; i++) {
@@ -81,6 +81,7 @@ struct TASK *task_init(struct MEMMAN *memman)
 		taskctl->tasks0[i].sel = (TASK_GDT0 + i) * 8;	/* sel initialize! */
 		set_segmdesc(gdt + TASK_GDT0 + i, 103, (int) &taskctl->tasks0[i].tss, AR_TSS32);
 	}
+
 	task = task_alloc();
 	task->flags = 2; /* running */
 	task->priority = 2;	/* default interval */
@@ -90,6 +91,18 @@ struct TASK *task_init(struct MEMMAN *memman)
 	load_tr(task->sel);
 	task_timer = timer_alloc();
 	timer_settime(task_timer, task->priority);
+
+	idle_task = task_alloc();
+	idle_task->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024;
+	idle_task->tss.eip = (int) &task_idle;
+	idle_task->tss.es = 1 * 8;
+	idle_task->tss.cs = 2 * 8;
+	idle_task->tss.ss = 1 * 8;
+	idle_task->tss.ds = 1 * 8;
+	idle_task->tss.fs = 1 * 8;
+	idle_task->tss.gs = 1 * 8;
+	task_run(idle_task, MAX_TASKLEVELS - 1, 1);
+
 	return task;
 }
 
@@ -146,7 +159,7 @@ void task_run(struct TASK *task, int level, int priority)
 void task_switch(void)
 {
 	struct TASKLEVEL *tlev = &taskctl->level[taskctl->now_lv];
-	struct TASK *task_next, *now_task = tlev->tasks[tlev->now];
+	struct TASK *next_task, *now_task = tlev->tasks[tlev->now];
 	
 	tlev->now++;
 	if(tlev->now == tlev->running){
@@ -154,15 +167,13 @@ void task_switch(void)
 	}
 	if(taskctl->lv_change != 0){
 		task_switchsub();
-		task_next = task_now();
-	}else{
-		task_next = tlev->tasks[tlev->now];
+		tlev = &taskctl->level[taskctl->now_lv];
 	}
+	next_task = tlev->tasks[tlev->now];
+	timer_settime(task_timer, next_task->priority);
 	
-	timer_settime(task_timer, task_next->priority);
-	
-	if (now_task != task_next) {
-		farjmp(0, task_next->sel);
+	if (now_task != next_task) {
+		farjmp(0, next_task->sel);
 	}
 	return;
 }

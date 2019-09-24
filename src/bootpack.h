@@ -244,6 +244,7 @@ void set490(struct FIFO32 *fifo, int mode);
 /* ===== taskfunc.c ===== */
 
 void task_b_main(struct SHEET *sht_win_b);
+void task_idle();
 
 /* ===== mtask.c ===== */
 
@@ -280,3 +281,4 @@ struct TASK *task_alloc(void);
 void task_run(struct TASK *task, int level, int priority);
 void task_switch(void);
 void task_sleep(struct TASK *task);
+struct TASK *task_now();
