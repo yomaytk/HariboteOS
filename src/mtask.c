@@ -55,11 +55,11 @@ void task_remove(struct TASK *task){
 }
 
 /* decide next tasklevel when task_switch */
-void task_switchsub(){
+void task_switchsub(int id){
 
-	for(int i = 0;i < MAX_TASKLEVELS;i++){
-		if(taskctl->level[i].running > 0){
-			taskctl->now_lv = i;
+	for(int i = id;;i++){
+		if(taskctl->level[i%MAX_TASKLEVELS].running > 0){
+			taskctl->now_lv = i%MAX_TASKLEVELS;
 			taskctl->lv_change = 0;
 			break;
 		}
@@ -87,7 +87,7 @@ struct TASK *task_init(struct MEMMAN *memman)
 	task->priority = 2;	/* default interval */
 	task->level = 0;
 	task_add(task);
-	task_switchsub();
+	task_switchsub(0);
 	load_tr(task->sel);
 	task_timer = timer_alloc();
 	timer_settime(task_timer, task->priority);
@@ -162,12 +162,17 @@ void task_switch(void)
 	struct TASK *next_task, *now_task = tlev->tasks[tlev->now];
 	
 	tlev->now++;
+	int flag = 0;
 	if(tlev->now == tlev->running){
 		tlev->now = 0;
+		flag = 1;
 	}
 	if(taskctl->lv_change != 0){
-		task_switchsub();
+		task_switchsub(0);
 		tlev = &taskctl->level[taskctl->now_lv];
+	}else if(flag == 1){
+		task_switchsub(taskctl->now_lv+1);
+		tlev = &taskctl->level[taskctl->now_lv];		
 	}
 	next_task = tlev->tasks[tlev->now];
 	timer_settime(task_timer, next_task->priority);
@@ -186,7 +191,7 @@ void task_sleep(struct TASK *task){
 		now_task = task_now();
 		task_remove(task);
 		if(now_task == task){
-			task_switchsub();
+			task_switchsub(0);
 			now_task = task_now();
 			farjmp(0, now_task->sel);
 		}
