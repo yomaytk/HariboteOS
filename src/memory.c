@@ -2,6 +2,8 @@
 
 #include<stdio.h>
 #include"bootpack.h"
+#include"mss_libc32.h"
+
 
 unsigned int memtest(unsigned int start, unsigned int end)
 {

@@ -1,5 +1,9 @@
+/* ~~~~~ FIFO32 process ~~~~~ */
+
 #include<stdio.h>
 #include"bootpack.h"
+#include"mss_libc32.h"
+
 
 void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task){	// unsigned char *buf ???
 	

@@ -2,6 +2,8 @@
 
 #include<stdio.h>
 #include "bootpack.h"
+#include"mss_libc32.h"
+
 
 struct SHTCTL *shtctl_init(struct MEMMAN *memman, unsigned char *vram, int xsize, int ysize)
 {

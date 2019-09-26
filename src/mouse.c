@@ -2,6 +2,8 @@
 
 #include<stdio.h>
 #include"bootpack.h"
+#include"mss_libc32.h"
+
 
 struct FIFO32 *mousefifo;
 int mousedata0;

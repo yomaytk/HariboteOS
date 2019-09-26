@@ -2,6 +2,7 @@
 
 #include<stdio.h>
 #include"bootpack.h"
+#include"mss_libc32.h"
 
 
 void main(){
@@ -94,8 +95,8 @@ void main(){
 	make_window8(buf_cons, 256, 165, "console", 0);
 	make_textbox8(sht_cons, 8, 28, 240, 128, COL8_000000);
 	task_cons = task_alloc();
-	task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 8;
-	task_cons->tss.eip = (int) &console_task;
+	task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 12;
+	task_cons->tss.eip = (int) &console_main;
 	task_cons->tss.es = 1 * 8;
 	task_cons->tss.cs = 2 * 8;
 	task_cons->tss.ss = 1 * 8;
@@ -103,6 +104,7 @@ void main(){
 	task_cons->tss.fs = 1 * 8;
 	task_cons->tss.gs = 1 * 8;
 	*((int *) (task_cons->tss.esp + 4)) = (int) sht_cons;
+	*((int *) (task_cons->tss.esp + 8)) = memtotal;
 	task_run(task_cons, 2, 2); /* level=2, priority=2 */
 	
 	sheet_slide(sht_back, 0, 0);
@@ -114,14 +116,8 @@ void main(){
 	sheet_updown(sht_win, 2);
 	sheet_updown(sht_mouse, 3);
 
-	sprint(s, "(%d, %d)", mx, my);
-	putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);
-	sprint(s, "memory %dMB   free : %dKB",
-			memtotal / (1024 * 1024), memman_total(memman) / 1024);
-	putfonts8_asc_sht(sht_back, 0, 32, COL8_FFFFFF, COL8_008484, s, 40);
-
 	sprint(s, "debug: %d", sht_cons);
-	putfonts8_asc_sht(sht_back, 200, 0, COL8_FFFFFF, COL8_008484, s, 15);
+	putfonts8_asc_sht(sht_back, 850, 720, COL8_FFFFFF, COL8_008484, s, 15);
 	
 	/* 最初にキーボード状態との食い違いがないように、設定しておくことにする */
 	fifo32_put(&keycmd, KEYCMD_LED);
@@ -160,13 +156,23 @@ void main(){
 						key_to = 1;
 						make_wtitle8(buf_win,  sht_win->bxsize,  "task_a",  0);
 						make_wtitle8(buf_cons, sht_cons->bxsize, "console", 1);
+						cursor_c = -1;
+						boxfill8(sht_win->buf, sht_win->bxsize, COL8_FFFFFF, cursor_x, 28, cursor_x + 7, 43);
+						sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
+						fifo32_put(&task_cons->fifo, 2);	/* cursor display ON on console */
 					} else {
 						key_to = 0;
 						make_wtitle8(buf_win,  sht_win->bxsize,  "task_a",  1);
 						make_wtitle8(buf_cons, sht_cons->bxsize, "console", 0);
+						cursor_c = COL8_000000;
+						fifo32_put(&task_cons->fifo, 3);	/* cursor display OFF on cosole */
 					}
 					sheet_refresh(sht_win,  0, 0, sht_win->bxsize,  21);
 					sheet_refresh(sht_cons, 0, 0, sht_cons->bxsize, 21);
+				}else if(data == 256 + 0x1c){
+					if(key_to != 0){
+						fifo32_put(&task_cons->fifo, 10 + 256);
+					}
 				}else if (data == 256 + 0x2a) {	/* left shift key ON */
 					key_shift |= 1;
 				}else if (data == 256 + 0x36) {	/* right shift key ON */
@@ -221,18 +227,7 @@ void main(){
 			}else if(512 <= data && data <= 767){
 				/* mouse interruption */
 				if (mouse_decode(&mdec, data-512) != 0) {
-					sprint(s, "[lcr %d %d]", mdec.x, mdec.y);
-					if ((mdec.btn & 0x01) != 0) {
-						s[1] = 'L';
-					}
-					if ((mdec.btn & 0x02) != 0) {
-						s[3] = 'R';
-					}
-					if ((mdec.btn & 0x04) != 0) {
-						s[2] = 'C';
-					}
-					putfonts8_asc_sht(sht_back, 32, 16, COL8_FFFFFF, COL8_008484, s, 15);					
-					/* マウスカーソルの移動 */
+					/* mouse cousor move */
 					mx += mdec.x;
 					my += mdec.y;
 					if (mx < 0) {
@@ -247,8 +242,6 @@ void main(){
 					if (my > binfo->scrny - 1) {
 						my = binfo->scrny - 1;
 					}
-					sprint(s, "(%d, %d)", mx, my);
-					putfonts8_asc_sht(sht_back, 0, 0, COL8_FFFFFF, COL8_008484, s, 10);					
 					sheet_slide(sht_mouse, mx, my);
 					/* slide window by mouse */
 					if ((mdec.btn & 0x01) != 0 && (sliding_flag == 1 || (sht_win->vx0 <= mx && 
@@ -266,15 +259,21 @@ void main(){
 			}else if (data <= 1) {
 				if (data != 0) {
 					timer_init(cursor_timer, &fifo, 0);
-					cursor_c = COL8_000000;
+					if(cursor_c >= 0){
+						cursor_c = COL8_000000;
+					}
 				} else {
 					timer_init(cursor_timer, &fifo, 1);
-					cursor_c = COL8_FFFFFF;
+					if(cursor_c >= 0){
+						cursor_c = COL8_FFFFFF;
+					}
 				}
 				timer_settime(cursor_timer, 50);
 				/* cursor display again */
-				boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
-				sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
+				if(cursor_c >= 0)	{
+					boxfill8(sht_win->buf, sht_win->bxsize, cursor_c, cursor_x, 28, cursor_x + 7, 43);
+					sheet_refresh(sht_win, cursor_x, 28, cursor_x + 8, 44);
+				}
 			}
 		}
 	}

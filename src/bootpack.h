@@ -230,7 +230,6 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 void init_screen8(char *vram, int x, int y);
 void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
 void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
-void sprint(char *ss, char *s, ...);
 void init_mouse_cursor8(char *mouse, char bc);
 void putblock8_8(char *vram, int vxsize, int pxsize,
 	int pysize, int px0, int py0, char *buf, int bxsize);
@@ -270,7 +269,6 @@ void set490(struct FIFO32 *fifo, int mode);
 
 void task_b_main(struct SHEET *sht_win_b);
 void task_idle();
-void console_task(struct SHEET *sheet);
 
 /* ===== mtask.c ===== */
 
@@ -312,3 +310,7 @@ struct TASK *task_now();
 
 extern char keytable[0x54];
 extern char keytable1[0x80];
+
+/* ===== cmd.c ===== */
+
+void console_main(struct SHEET *sht_cons, unsigned int memtotal);

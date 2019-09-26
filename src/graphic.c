@@ -1,8 +1,9 @@
 /*===== graphic =====*/
 
 #include<stdio.h>
-#include<stdarg.h>
 #include"bootpack.h"
+#include"mss_libc32.h"
+
 
 char hankaku[4096];
 
@@ -104,52 +105,7 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 	}
 	return;
 }
-/*===== sprintの補助関数 =====*/
-int sub_sp(char *s, int arg, int dig){
-	
-	int a = arg, d = 0, f = 0, b;
 
-	if(a < 0){
-		*(s++) = 0x2d;	// 0x2d -> '-'
-		a *= -1;
-		f = 1;
-	}
-	b = a;	
-	while(b > 0){b /= dig;d++;}
-	if(d == 0)	d = 1;
-	for(int j = d-1;j >= 0;j--){
-		char c = a%dig;
-		if(c < 10)	*(s+j) = 0x30+c;
-		else 	*(s+j) = 0x60+(c-9);
-		a /= dig;
-	}
-	return (d+f);
-}
-/*===== sprintfの代替関数 =====*/
-void sprint(char *s, char *ss, ...){
-
-	va_list itr;
-	va_start(itr, *ss);
-	int d = 0;
-
-	while(*ss){
-		if(*ss != '%' || *(ss+1) == 0x00){
-			*(s++) = *(ss++);
-		}else {
-			char c = *(ss+1);
-			if(c == 'd'){
-				d = sub_sp(s, va_arg(itr, int), 10);
-			}else if(c == 'x'){
-				d = sub_sp(s, va_arg(itr, int), 16);
-			}
-			s += d;
-			ss += 2;
-		}
-	}
-	*s = 0x00;
-	va_end(itr);
-	return ;
-}
 void init_mouse_cursor8(char *mouse, char bc)
 /* マウスカーソルを準備（16x16） */
 {

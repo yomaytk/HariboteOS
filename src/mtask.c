@@ -2,6 +2,8 @@
 
 #include<stdio.h>
 #include "bootpack.h"
+#include"mss_libc32.h"
+
 
 struct TASKCTL *taskctl;
 struct TIMER *task_timer;

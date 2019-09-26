@@ -1,6 +1,8 @@
 /* ~~~~~ timer ~~~~~ */
 #include<stdio.h>
 #include "bootpack.h"
+#include"mss_libc32.h"
+
 
 #define PIT_CTRL	0x0043
 #define PIT_CNT0	0x0040
