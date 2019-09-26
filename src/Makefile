@@ -43,7 +43,7 @@ img :
 
 run :
 	$(MAKE) img
-	qemu-system-i386 -fda os.img		
+	qemu-system-i386 -fda os.img	
 	
 #"-fda" for floppy disk
 	

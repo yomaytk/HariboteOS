@@ -116,8 +116,8 @@ void main(){
 	sheet_updown(sht_win, 2);
 	sheet_updown(sht_mouse, 3);
 
-	sprint(s, "debug: %d", sht_cons);
-	putfonts8_asc_sht(sht_back, 850, 720, COL8_FFFFFF, COL8_008484, s, 15);
+	// sprint(s, "debug: %d", sht_cons);
+	// putfonts8_asc_sht(sht_back, 850, 720, COL8_FFFFFF, COL8_008484, s, 15);
 	
 	/* 最初にキーボード状態との食い違いがないように、設定しておくことにする */
 	fifo32_put(&keycmd, KEYCMD_LED);

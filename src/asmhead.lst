@@ -35,69 +35,69 @@
     35                                  ;	0x107 : 1280 x 1024 x 8bitカラー
     36                                  
     37                                  ; VBE存在確認
-    38 00000000 EB64                    		JMP		scrn320
-    39 00000002 B80090                  		MOV		AX,0x9000
-    40 00000005 8EC0                    		MOV		ES,AX
-    41 00000007 BF0000                  		MOV		DI,0
-    42 0000000A B8004F                  		MOV		AX,0x4f00
-    43 0000000D CD10                    		INT		0x10
-    44 0000000F 83F84F                  		CMP		AX,0x004f
-    45 00000012 7552                    		JNE		scrn320
+    38                                  		;JMP		scrn320
+    39 00000000 B80090                  		MOV		AX,0x9000
+    40 00000003 8EC0                    		MOV		ES,AX
+    41 00000005 BF0000                  		MOV		DI,0
+    42 00000008 B8004F                  		MOV		AX,0x4f00
+    43 0000000B CD10                    		INT		0x10
+    44 0000000D 83F84F                  		CMP		AX,0x004f
+    45 00000010 7552                    		JNE		scrn320
     46                                  
     47                                  ; VBEのバージョンチェック
     48                                  
-    49 00000014 268B4504                		MOV		AX,[ES:DI+4]
-    50 00000018 3D0002                  		CMP		AX,0x0200
-    51 0000001B 7249                    		JB		scrn320			; if (AX < 0x0200) goto scrn320
+    49 00000012 268B4504                		MOV		AX,[ES:DI+4]
+    50 00000016 3D0002                  		CMP		AX,0x0200
+    51 00000019 7249                    		JB		scrn320			; if (AX < 0x0200) goto scrn320
     52                                  
     53                                  ; 画面モード情報を得る
     54                                  
-    55 0000001D B90501                  		MOV		CX,VBEMODE
-    56 00000020 B8014F                  		MOV		AX,0x4f01
-    57 00000023 CD10                    		INT		0x10
-    58 00000025 83F84F                  		CMP		AX,0x004f
-    59 00000028 753C                    		JNE		scrn320
+    55 0000001B B90501                  		MOV		CX,VBEMODE
+    56 0000001E B8014F                  		MOV		AX,0x4f01
+    57 00000021 CD10                    		INT		0x10
+    58 00000023 83F84F                  		CMP		AX,0x004f
+    59 00000026 753C                    		JNE		scrn320
     60                                  
     61                                  ; 画面モード情報の確認
     62                                  
-    63 0000002A 26807D1908              		CMP		BYTE [ES:DI+0x19],8
-    64 0000002F 7535                    		JNE		scrn320
-    65 00000031 26807D1B04              		CMP		BYTE [ES:DI+0x1b],4
-    66 00000036 752E                    		JNE		scrn320
-    67 00000038 268B05                  		MOV		AX,[ES:DI+0x00]
-    68 0000003B 258000                  		AND		AX,0x0080
-    69 0000003E 7426                    		JZ		scrn320			; モード属性のbit7が0だったのであきらめる
+    63 00000028 26807D1908              		CMP		BYTE [ES:DI+0x19],8
+    64 0000002D 7535                    		JNE		scrn320
+    65 0000002F 26807D1B04              		CMP		BYTE [ES:DI+0x1b],4
+    66 00000034 752E                    		JNE		scrn320
+    67 00000036 268B05                  		MOV		AX,[ES:DI+0x00]
+    68 00000039 258000                  		AND		AX,0x0080
+    69 0000003C 7426                    		JZ		scrn320			; モード属性のbit7が0だったのであきらめる
     70                                  
     71                                  ; 画面モードの切り替え
     72                                  
-    73 00000040 BB0541                  		MOV		BX,VBEMODE+0x4000
-    74 00000043 B8024F                  		MOV		AX,0x4f02
-    75 00000046 CD10                    		INT		0x10
-    76 00000048 C606F20F08              		MOV		BYTE [VMODE],8	; 画面モードをメモする（C言語が参照する）
-    77 0000004D 268B4512                		MOV		AX,[ES:DI+0x12]
-    78 00000051 A3F40F                  		MOV		[SCRNX],AX
-    79 00000054 268B4514                		MOV		AX,[ES:DI+0x14]
-    80 00000058 A3F60F                  		MOV		[SCRNY],AX
-    81 0000005B 26668B4528              		MOV		EAX,[ES:DI+0x28]
-    82 00000060 66A3F80F                		MOV		[VRAM],EAX
-    83 00000064 EB22                    		JMP		keystatus
+    73 0000003E BB0541                  		MOV		BX,VBEMODE+0x4000
+    74 00000041 B8024F                  		MOV		AX,0x4f02
+    75 00000044 CD10                    		INT		0x10
+    76 00000046 C606F20F08              		MOV		BYTE [VMODE],8	; 画面モードをメモする（C言語が参照する）
+    77 0000004B 268B4512                		MOV		AX,[ES:DI+0x12]
+    78 0000004F A3F40F                  		MOV		[SCRNX],AX
+    79 00000052 268B4514                		MOV		AX,[ES:DI+0x14]
+    80 00000056 A3F60F                  		MOV		[SCRNY],AX
+    81 00000059 26668B4528              		MOV		EAX,[ES:DI+0x28]
+    82 0000005E 66A3F80F                		MOV		[VRAM],EAX
+    83 00000062 EB22                    		JMP		keystatus
     84                                  
     85                                  scrn320:
-    86 00000066 B013                    		MOV		AL,0x13			; VGAグラフィックス、320x200x8bitカラー
-    87 00000068 B400                    		MOV		AH,0x00
-    88 0000006A CD10                    		INT		0x10
-    89 0000006C C606F20F08              		MOV		BYTE [VMODE],8	; 画面モードをメモする（C言語が参照する）
-    90 00000071 C706F40F4001            		MOV		WORD [SCRNX],320
-    91 00000077 C706F60FC800            		MOV		WORD [SCRNY],200
-    92 0000007D 66C706F80F00000A00      		MOV		DWORD [VRAM],0x000a0000
-    93 00000086 EB00                    		JMP		keystatus
+    86 00000064 B013                    		MOV		AL,0x13			; VGAグラフィックス、320x200x8bitカラー
+    87 00000066 B400                    		MOV		AH,0x00
+    88 00000068 CD10                    		INT		0x10
+    89 0000006A C606F20F08              		MOV		BYTE [VMODE],8	; 画面モードをメモする（C言語が参照する）
+    90 0000006F C706F40F4001            		MOV		WORD [SCRNX],320
+    91 00000075 C706F60FC800            		MOV		WORD [SCRNY],200
+    92 0000007B 66C706F80F00000A00      		MOV		DWORD [VRAM],0x000a0000
+    93 00000084 EB00                    		JMP		keystatus
     94                                  
     95                                  ; キーボードのLED状態をBIOSに教えてもらう
     96                                  
     97                                  keystatus:
-    98 00000088 B402                    		MOV		AH,0x02
-    99 0000008A CD16                    		INT		0x16 			; keyboard BIOS
-   100 0000008C A2F10F                  		MOV		[LEDS],AL
+    98 00000086 B402                    		MOV		AH,0x02
+    99 00000088 CD16                    		INT		0x16 			; keyboard BIOS
+   100 0000008A A2F10F                  		MOV		[LEDS],AL
    101                                  
    102                                  		; MOV		BX,0x4101		; VBEの640x480x8bitカラー
    103                                  		; MOV		AX,0x4f02
@@ -142,108 +142,108 @@
    142                                          ; こいつをCLI前にやっておかないと、たまにハングアップする
    143                                          ; PICの初期化はあとでやる
    144                                  
-   145 0000008F B0FF                            MOV     AL, 0xff
-   146 00000091 E621                            OUT     0x21, AL
-   147 00000093 90                              NOP                   ; OUT命令を連続させるとうまくいかない機種があるらしいので
-   148 00000094 E6A1                            OUT     0xa1, AL
+   145 0000008D B0FF                            MOV     AL, 0xff
+   146 0000008F E621                            OUT     0x21, AL
+   147 00000091 90                              NOP                   ; OUT命令を連続させるとうまくいかない機種があるらしいので
+   148 00000092 E6A1                            OUT     0xa1, AL
    149                                  
-   150 00000096 FA                              CLI                   ; さらにCPUレベルでも割り込み禁止
+   150 00000094 FA                              CLI                   ; さらにCPUレベルでも割り込み禁止
    151                                  
    152                                          ; CPUから1MB以上のメモリにアクセスできるように、A20GATEを設定
    153                                  
-   154 00000097 E8B500                          CALL waitkbdout
-   155 0000009A B0D1                            MOV  AL,0xd1
-   156 0000009C E664                            OUT  0x64,AL
-   157 0000009E E8AE00                          CALL waitkbdout
-   158 000000A1 B0DF                            MOV  AL,0xdf          ; enable A20
-   159 000000A3 E660                            OUT  0x60,AL
-   160 000000A5 E8A700                          CALL waitkbdout
+   154 00000095 E8B500                          CALL waitkbdout
+   155 00000098 B0D1                            MOV  AL,0xd1
+   156 0000009A E664                            OUT  0x64,AL
+   157 0000009C E8AE00                          CALL waitkbdout
+   158 0000009F B0DF                            MOV  AL,0xdf          ; enable A20
+   159 000000A1 E660                            OUT  0x60,AL
+   160 000000A3 E8A700                          CALL waitkbdout
    161                                  
    162                                          ; プロテクトモード移行
    163                                          
    164                                          ;[INSTRSET "i486p"]    ; i486の命令まで使いたいという記述
    165                                          ; ここで指定するのではなくgccでcompileする際にi486で指定
    166                                  
-   167 000000A8 0F0116[8A01]                    LGDT [GDTR0]   ; 暫定GDTを設定
-   168 000000AD 0F20C0                          MOV  EAX,CR0
-   169 000000B0 6625FFFFFF7F                    AND  EAX,0x7fffffff ; bit31を0にする（ページング禁止のため）
-   170 000000B6 6683C801                        OR  EAX,0x00000001 ; bit0を1にする（プロテクトモード移行のため）
-   171 000000BA 0F22C0                          MOV  CR0,EAX
-   172 000000BD EB00                            JMP  pipelineflush
+   167 000000A6 0F0116[8A01]                    LGDT [GDTR0]   ; 暫定GDTを設定
+   168 000000AB 0F20C0                          MOV  EAX,CR0
+   169 000000AE 6625FFFFFF7F                    AND  EAX,0x7fffffff ; bit31を0にする（ページング禁止のため）
+   170 000000B4 6683C801                        OR  EAX,0x00000001 ; bit0を1にする（プロテクトモード移行のため）
+   171 000000B8 0F22C0                          MOV  CR0,EAX
+   172 000000BB EB00                            JMP  pipelineflush
    173                                  pipelineflush:
-   174 000000BF B80800                          MOV  AX,1*8   ;  読み書き可能セグメント32bit
-   175 000000C2 8ED8                            MOV  DS,AX
-   176 000000C4 8EC0                            MOV  ES,AX
-   177 000000C6 8EE0                            MOV  FS,AX
-   178 000000C8 8EE8                            MOV  GS,AX
-   179 000000CA 8ED0                            MOV  SS,AX
+   174 000000BD B80800                          MOV  AX,1*8   ;  読み書き可能セグメント32bit
+   175 000000C0 8ED8                            MOV  DS,AX
+   176 000000C2 8EC0                            MOV  ES,AX
+   177 000000C4 8EE0                            MOV  FS,AX
+   178 000000C6 8EE8                            MOV  GS,AX
+   179 000000C8 8ED0                            MOV  SS,AX
    180                                  
    181                                          ; bootpackの転送
    182                                  
-   183 000000CC 66BE[90010000]                  MOV  ESI,bootpack ; 転送元
-   184 000000D2 66BF00002800                    MOV  EDI,BOTPAK  ; 転送先
-   185 000000D8 66B900000200                    MOV  ECX,512*1024/4
+   183 000000CA 66BE[90010000]                  MOV  ESI,bootpack ; 転送元
+   184 000000D0 66BF00002800                    MOV  EDI,BOTPAK  ; 転送先
+   185 000000D6 66B900000200                    MOV  ECX,512*1024/4
    186                                          ;MOV  ECX, 131072
-   187 000000DE E87500                          CALL memcpy
+   187 000000DC E87500                          CALL memcpy
    188                                  
    189                                          ; ついでにディスクデータも本来の位置へ転送
    190                                  
    191                                          ; まずはブートセクタから
    192                                  
-   193 000000E1 66BE007C0000                    MOV  ESI,0x7c00  ; 転送元
-   194 000000E7 66BF00001000                    MOV  EDI,DSKCAC  ; 転送先
-   195 000000ED 66B980000000                    MOV  ECX,512/4
+   193 000000DF 66BE007C0000                    MOV  ESI,0x7c00  ; 転送元
+   194 000000E5 66BF00001000                    MOV  EDI,DSKCAC  ; 転送先
+   195 000000EB 66B980000000                    MOV  ECX,512/4
    196                                          ;MOV  ECX, 128
-   197 000000F3 E86000                          CALL memcpy
+   197 000000F1 E86000                          CALL memcpy
    198                                  
    199                                          ; 残り全部
    200                                  
-   201 000000F6 66BE00820000                    MOV  ESI,DSKCAC0+512 ; 転送元
-   202 000000FC 66BF00021000                    MOV  EDI,DSKCAC+512 ; 転送先
-   203 00000102 66B900000000                    MOV  ECX,0
-   204 00000108 8A0EF00F                        MOV  CL,BYTE [CYLS]
-   205 0000010C 6669C900120000                  IMUL ECX,512*18*2/4 ; シリンダ数からバイト数/4に変換
+   201 000000F4 66BE00820000                    MOV  ESI,DSKCAC0+512 ; 転送元
+   202 000000FA 66BF00021000                    MOV  EDI,DSKCAC+512 ; 転送先
+   203 00000100 66B900000000                    MOV  ECX,0
+   204 00000106 8A0EF00F                        MOV  CL,BYTE [CYLS]
+   205 0000010A 6669C900120000                  IMUL ECX,512*18*2/4 ; シリンダ数からバイト数/4に変換
    206                                          ;IMUL ECX, 4608
-   207 00000113 6681E980000000                  SUB  ECX,512/4  ; IPLの分だけ差し引く
+   207 00000111 6681E980000000                  SUB  ECX,512/4  ; IPLの分だけ差し引く
    208                                          ;SUB  ECX, 128  ; IPLの分だけ差し引く
-   209 0000011A E83900                          CALL memcpy
+   209 00000118 E83900                          CALL memcpy
    210                                  
    211                                          ; asmheadでしなければいけないことは全部し終わったので、
    212                                          ; あとはbootpackに任せる
    213                                          
    214                                          ; bootpackの起動
    215                                  
-   216 0000011D 66BB00002800                    MOV  EBX,BOTPAK
-   217 00000123 66678B4B10                      MOV  ECX,[EBX+16]
-   218 00000128 6683C103                        ADD  ECX,3   ; ECX += 3;
-   219 0000012C 66C1E902                        SHR  ECX,2   ; ECX /= 4;
-   220 00000130 7410                            JZ  skip   ; 転送するべきものがない
-   221 00000132 66678B7314                      MOV  ESI,[EBX+20] ; 転送元
-   222 00000137 6601DE                          ADD  ESI,EBX
-   223 0000013A 66678B7B0C                      MOV  EDI,[EBX+12] ; 転送先
-   224 0000013F E81400                          CALL memcpy
+   216 0000011B 66BB00002800                    MOV  EBX,BOTPAK
+   217 00000121 66678B4B10                      MOV  ECX,[EBX+16]
+   218 00000126 6683C103                        ADD  ECX,3   ; ECX += 3;
+   219 0000012A 66C1E902                        SHR  ECX,2   ; ECX /= 4;
+   220 0000012E 7410                            JZ  skip   ; 転送するべきものがない
+   221 00000130 66678B7314                      MOV  ESI,[EBX+20] ; 転送元
+   222 00000135 6601DE                          ADD  ESI,EBX
+   223 00000138 66678B7B0C                      MOV  EDI,[EBX+12] ; 転送先
+   224 0000013D E81400                          CALL memcpy
    225                                  skip:
-   226 00000142 66678B630C                      MOV  ESP,[EBX+12] ; スタック初期値
-   227 00000147 66EA1B0000001000                JMP  DWORD 2*8:0x0000001b
+   226 00000140 66678B630C                      MOV  ESP,[EBX+12] ; スタック初期値
+   227 00000145 66EA1B0000001000                JMP  DWORD 2*8:0x0000001b
    228                                  
    229                                  waitkbdout:
-   230 0000014F E464                            IN   AL,0x64
-   231 00000151 2402                            AND   AL,0x02
+   230 0000014D E464                            IN   AL,0x64
+   231 0000014F 2402                            AND   AL,0x02
    232                                  		;IN	 AL,0x60			; <- removeした
-   233 00000153 75FA                            JNZ  waitkbdout  ; ANDの結果が0でなければwaitkbdoutへ
-   234 00000155 C3                              RET
+   233 00000151 75FA                            JNZ  waitkbdout  ; ANDの結果が0でなければwaitkbdoutへ
+   234 00000153 C3                              RET
    235                                  
    236                                  memcpy:
-   237 00000156 66678B06                        MOV  EAX,[ESI]
-   238 0000015A 6683C604                        ADD  ESI,4
-   239 0000015E 66678907                        MOV  [EDI],EAX
-   240 00000162 6683C704                        ADD  EDI,4
-   241 00000166 6683E901                        SUB  ECX,1
-   242 0000016A 75EA                            JNZ  memcpy   ; 引き算した結果が0でなければmemcpyへ
-   243 0000016C C3                              RET
+   237 00000154 66678B06                        MOV  EAX,[ESI]
+   238 00000158 6683C604                        ADD  ESI,4
+   239 0000015C 66678907                        MOV  [EDI],EAX
+   240 00000160 6683C704                        ADD  EDI,4
+   241 00000164 6683E901                        SUB  ECX,1
+   242 00000168 75EA                            JNZ  memcpy   ; 引き算した結果が0でなければmemcpyへ
+   243 0000016A C3                              RET
    244                                          ; memcpyはアドレスサイズプリフィクスを入れ忘れなければ、ストリング命令でも書ける
    245                                  
-   246 0000016D <res 00000003>                  ALIGNB 16
+   246 0000016B <res 00000005>                  ALIGNB 16
    246          ******************       warning: uninitialized space declared in .text section: zeroing
    247                                  GDT0:
    248 00000170 <res 00000008>                  RESB 8    ; ヌルセレクタ

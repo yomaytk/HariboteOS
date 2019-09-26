@@ -88,6 +88,71 @@ int ls(struct SHEET *sht_cons, int cursor_y){
 	return cursor_y;
 
 }
+
+/* cat command */
+int cat(struct SHEET *sht_cons, char cmdline[], int cursor_y){
+
+	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);
+	char s[50];
+	int x, y;
+
+	/* prepare filename */
+		for (y = 0; y < 11; y++) {
+			s[y] = ' ';
+		}
+		y = 0;
+		for (x = 4; y < 11 && cmdline[x] != 0; x++) {
+			if (cmdline[x] == '.' && y <= 8) {
+				y = 8;
+			} else {
+				s[y] = cmdline[x];
+				if ('a' <= s[y] && s[y] <= 'z') {
+					/* convert capitals character */
+					s[y] -= 0x20;
+				}
+				y++;
+			}
+		}
+		/* look for file */
+		for (x = 0; x < 224 ;) {
+			if (finfo[x].name[0] == 0x00) {
+				break;
+			}
+			if ((finfo[x].type & 0x18) == 0) {
+				for (y = 0; y < 11; y++) {
+					if (finfo[x].name[y] != s[y]) {
+						goto type_next_file;
+					}
+				}
+				break;
+			}
+type_next_file:
+			x++;
+		}
+		if (x < 224 && finfo[x].name[0] != 0x00) {
+			/* case of finding file */
+			y = finfo[x].size;
+			char *p = (char *) (finfo[x].clustno * 512 + 0x003e00 + ADR_DISKIMG);
+			int cursor_x = 8;
+			for (x = 0; x < y; x++) {
+				s[0] = p[x];
+				s[1] = 0;
+				putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, s, 1);
+				cursor_x += 8;
+				if (cursor_x == 8 + 240) {
+					cursor_x = 8;
+					cursor_y = cons_newline(cursor_y, sht_cons);
+				}
+			}
+		} else {
+			/* case of cannot finding file */
+			putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
+			cursor_y = cons_newline(cursor_y, sht_cons);
+		}
+	cursor_y = cons_newline(cursor_y, sht_cons);
+	return cursor_y;
+}
+
 /* All command set */
 int command_set(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned int memtotal, int cursor_y){
 
@@ -97,6 +162,8 @@ int command_set(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned 
 		return clear(sht_cons);
 	}else if(strcomp(cmdline, "ls", cmd_size, 2) == 0){
 		return ls(sht_cons, cursor_y);
+	}else if (cmdline[0] == 'c' && cmdline[1] == 'a' && cmdline[2] == 't') {
+		return cat(sht_cons, cmdline, cursor_y);
 	}else if (cmdline[0] != 0) {
 		/* not command or empty line */
 		putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);

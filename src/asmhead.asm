@@ -35,7 +35,7 @@ VBEMODE	EQU		0x105			; 1024 x  768 x 8bitカラー
 ;	0x107 : 1280 x 1024 x 8bitカラー
 
 ; VBE存在確認
-		JMP		scrn320
+		;JMP		scrn320
 		MOV		AX,0x9000
 		MOV		ES,AX
 		MOV		DI,0
