@@ -31,7 +31,7 @@ int cons_newline(int cursor_y, struct SHEET *sht_cons){
 }
 
 /* mem comamnd */
-int mem(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned int memtotal, int cursor_y){
+int mem(struct SHEET *sht_cons, unsigned int memtotal, int cursor_y){
 
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	char s[50];
@@ -43,12 +43,12 @@ int mem(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned int memt
 	putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
 	cursor_y = cons_newline(cursor_y, sht_cons);
 	cursor_y = cons_newline(cursor_y, sht_cons);
-	
+
 	return cursor_y;
 }
 
 /* clear command */
-int clear(struct SHEET *sht_cons, char cmdline[], char cmd_size){
+int clear(struct SHEET *sht_cons){
 
 	for (int y = 28; y < 28 + 128; y++) {
 		for (int x = 8; x < 8 + 240; x++) {
@@ -59,12 +59,44 @@ int clear(struct SHEET *sht_cons, char cmdline[], char cmd_size){
 	return 28;
 }
 
+/* ls command */
+int ls(struct SHEET *sht_cons, int cursor_y){
+
+	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);
+	char s[50];
+
+	for (int x = 0; x < 224; x++) {
+		if (finfo[x].name[0] == 0x00) {
+			break;
+		}
+		if (finfo[x].name[0] != 0xe5) {
+			if ((finfo[x].type & 0x18) == 0) {
+				sprint(s, "filename.ext   %d", finfo[x].size);
+				for (int y = 0; y < 8; y++) {
+					s[y] = finfo[x].name[y];
+				}
+				s[9] = finfo[x].ext[0];
+				s[10] = finfo[x].ext[1];
+				s[11] = finfo[x].ext[2];
+				putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
+				cursor_y = cons_newline(cursor_y, sht_cons);
+			}
+		}
+	}
+	cursor_y = cons_newline(cursor_y, sht_cons);
+
+	return cursor_y;
+
+}
+/* All command set */
 int command_set(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned int memtotal, int cursor_y){
 
 	if (strcomp(cmdline, "mem", cmd_size, 3) == 0){
-		return mem(sht_cons, cmdline, cmd_size, memtotal, cursor_y);
+		return mem(sht_cons, memtotal, cursor_y);
 	}else if(strcomp(cmdline, "clear", cmd_size, 5) == 0){
-		return clear(sht_cons, cmdline, cmd_size);
+		return clear(sht_cons);
+	}else if(strcomp(cmdline, "ls", cmd_size, 2) == 0){
+		return ls(sht_cons, cursor_y);
 	}else if (cmdline[0] != 0) {
 		/* not command or empty line */
 		putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
