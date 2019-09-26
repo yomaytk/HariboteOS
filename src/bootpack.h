@@ -110,6 +110,8 @@ void inthandler27(int *esp);
 #define KEYCMD_SENDTO_MOUSE		0xd4
 #define MOUSECMD_ENABLE			0xf4
 
+#define KEYCMD_LED				0xed
+
 void wait_KBC_sendready();
 void init_keyboard(struct FIFO32 *fifo, int data0);
 void inthandler21(int *esp);
@@ -309,4 +311,4 @@ void task_sleep(struct TASK *task);
 struct TASK *task_now();
 
 extern char keytable[0x54];
-	extern char keytable1[0x80];
+extern char keytable1[0x80];

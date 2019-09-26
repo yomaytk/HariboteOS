@@ -36,7 +36,9 @@ void main(){
 	int key_to = 0;
 	/* shift, CapsLock, NumLock, key_flag */
 	int key_shift = 0, key_leds = (binfo->leds >> 4) & 7;	// bit4->ScrollLock, bit5->NumLock, bit6->CapsLock
-
+	/* keyboard LED */
+	int keycmd_wait = -1;
+	struct FIFO32 keycmd;
 
 	init_gdtidt();			// GDT IDT initialization
 	init_pic();				// PIC initialization
@@ -121,10 +123,19 @@ void main(){
 	sprint(s, "debug: %d", sht_cons);
 	putfonts8_asc_sht(sht_back, 200, 0, COL8_FFFFFF, COL8_008484, s, 15);
 	
+	/* 最初にキーボード状態との食い違いがないように、設定しておくことにする */
+	fifo32_put(&keycmd, KEYCMD_LED);
+	fifo32_put(&keycmd, key_leds);
+
 	for (;;) {
 		
-		// for(int i = 0;i < 1200;i++)	i = i;
-		
+		/* keyboard LED data send */
+		if(fifo32_status(&keycmd) > 0 && keycmd_wait < 0){
+			keycmd_wait = fifo32_get(&keycmd);
+			wait_KBC_sendready();
+			io_out8(PORT_KEYDAT, keycmd_wait);
+		}
+		/* interruption process */
 		io_cli();
 		if(fifo32_status(&fifo) == 0){
 			task_sleep(task_a);
@@ -133,6 +144,7 @@ void main(){
 			int data = fifo32_get(&fifo);
 			io_sti();
 			if(256 <= data && data <= 511){
+				/* keyboard interupption */
 				char s[40];
 				if (data == 256 + 0x0e) { /* back space key */
 					if(key_to == 0 && cursor_x > 8){
@@ -163,8 +175,25 @@ void main(){
 					key_shift &= ~1;
 				}else if (data == 256 + 0xb6) {	/* right shift key OFF */
 					key_shift &= ~2;
+				}else if (data == 256 + 0x3a) {	/* CapsLock */
+					key_leds ^= 4;
+					fifo32_put(&keycmd, KEYCMD_LED);
+					fifo32_put(&keycmd, key_leds);
+				}else if (data == 256 + 0x45) {	/* NumLock */
+					key_leds ^= 2;
+					fifo32_put(&keycmd, KEYCMD_LED);
+					fifo32_put(&keycmd, key_leds);
+				}else if (data == 256 + 0x46) {	/* ScrollLock */
+					key_leds ^= 1;
+					fifo32_put(&keycmd, KEYCMD_LED);
+					fifo32_put(&keycmd, key_leds);
+				}else if (data == 256 + 0xfa) {	/* sending data to keyboard success */
+					keycmd_wait = -1;
+				}else if (data == 256 + 0xfe) {	/* sending data to keyboard fail */
+					wait_KBC_sendready();
+					io_out8(PORT_KEYDAT, keycmd_wait);
 				}else if (data < 0x80 + 256) {
-					/* normal character */
+					/* normal character input */
 					/* shift key ON ?*/
 					if(key_shift == 0){
 						s[0] = keytable0[data - 256];
@@ -190,6 +219,7 @@ void main(){
 					}
 				}
 			}else if(512 <= data && data <= 767){
+				/* mouse interruption */
 				if (mouse_decode(&mdec, data-512) != 0) {
 					sprint(s, "[lcr %d %d]", mdec.x, mdec.y);
 					if ((mdec.btn & 0x01) != 0) {
