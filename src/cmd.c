@@ -215,18 +215,9 @@ int hlt_exe(struct SHEET *sht_cons, int cursor_y, int *fat){
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 
 	int x, y;
-	char s[50];
+	char s[] = "HLT     BIN";
 
-		for (y = 0; y < 11; y++) {
-			s[y] = ' ';
-		}
-		s[0] = 'H';
-		s[1] = 'L';
-		s[2] = 'T';
-		s[8] = 'B';
-		s[9] = 'I';
-		s[10] = 'N';
-		for (x = 0; x < 224; ) {
+		for (x = 0; x < 224 ;) {
 			if (finfo[x].name[0] == 0x00) {
 				break;
 			}
@@ -317,6 +308,7 @@ void console_main(struct SHEET *sht_cons, unsigned int memtotal)
 					if(cursor_x > 24){
 						putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
 						cursor_x -= 8;
+						cmd_size--;
 					}
 				}else if(data == 10 + 256){
 					/* enter key */
