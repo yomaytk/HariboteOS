@@ -207,6 +207,56 @@ type_next_file:
 	return cursor_y;
 }
 
+/* execution hlt.bin */
+int hlt_exe(struct SHEET *sht_cons, int cursor_y, int *fat){
+
+	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);	
+	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
+
+	int x, y;
+	char s[50];
+
+		for (y = 0; y < 11; y++) {
+			s[y] = ' ';
+		}
+		s[0] = 'H';
+		s[1] = 'L';
+		s[2] = 'T';
+		s[8] = 'B';
+		s[9] = 'I';
+		s[10] = 'N';
+		for (x = 0; x < 224; ) {
+			if (finfo[x].name[0] == 0x00) {
+				break;
+			}
+			if ((finfo[x].type & 0x18) == 0) {
+				for (y = 0; y < 11; y++) {
+					if (finfo[x].name[y] != s[y]) {
+						goto hlt_next_file;
+					}
+				}
+				break;
+			}
+hlt_next_file:
+			x++;
+		}
+		if (x < 224 && finfo[x].name[0] != 0x00) {
+			/* case of finding file */
+			char *p = (char *) memman_alloc_4k(memman, finfo[x].size);
+			file_loadfile(finfo[x].clustno, finfo[x].size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
+			set_segmdesc(gdt + 1003, finfo[x].size - 1, (int) p, AR_CODE32_ER);
+			farjmp(0, 1003 * 8);
+			memman_free_4k(memman, (int) p, finfo[x].size);
+		} else {
+			/* case of cannot finding file */
+			putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
+			cursor_y = cons_newline(cursor_y, sht_cons);
+		}
+	cursor_y = cons_newline(cursor_y, sht_cons);
+	return cursor_y;
+}
+
 /* All command set */
 int command_set(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned int memtotal, int cursor_y, int *fat){
 
@@ -218,6 +268,8 @@ int command_set(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned 
 		return ls(sht_cons, cursor_y);
 	}else if (strcomp(cmdline, "cat ", 4, 4) == 0) {
 		return cat(sht_cons, cmdline, cursor_y, fat);
+	}else if(strcomp(cmdline, "hlt", 3, 3) == 0){
+		hlt_exe(sht_cons, cursor_y, fat);
 	}else if (cmdline[0] != 0) {
 		/* not command or empty line */
 		putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
