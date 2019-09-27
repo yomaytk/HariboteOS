@@ -89,120 +89,59 @@ int ls(struct SHEET *sht_cons, int cursor_y){
 
 }
 
-/* release FAT compression */
-void file_readfat(int *fat, unsigned char *img)
-{
-	int i, j = 0;
-	for (i = 0; i < 2880; i += 2) {
-		fat[i + 0] = (img[j + 0]      | img[j + 1] << 8) & 0xfff;
-		fat[i + 1] = (img[j + 1] >> 4 | img[j + 2] << 4) & 0xfff;
-		j += 3;
-	}
-	return;
-}
+void cons_putchar(struct SHEET *sht_cons, int *cursor_x, int *cursor_y, char s[]){
 
-/* load file context */
-void file_loadfile(int clustno, int size, char *buf, int *fat, char *img)
-{
-	int i;
-	for (;;) {
-		if (size <= 512) {
-			for (i = 0; i < size; i++) {
-				buf[i] = img[clustno * 512 + i];
+	if (s[0] == 0x09) {	/* tab */
+		for (;;) {
+			putfonts8_asc_sht(sht_cons, *cursor_x, *cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
+			*cursor_x += 8;
+			if (*cursor_x == 8 + DEFAULT_CONS_XSIZE - 16) {
+				*cursor_x = 8;
+				*cursor_y = cons_newline(*cursor_y, sht_cons);
 			}
-			break;
+			if (((*cursor_x - 8) & 0x1f) == 0) {
+				break;	/* if 0 mod 32, break */
+			}
 		}
-		for (i = 0; i < 512; i++) {
-			buf[i] = img[clustno * 512 + i];
+	} else if (s[0] == 0x0a) {	/* new line */
+		*cursor_x = 8;
+		*cursor_y = cons_newline(*cursor_y, sht_cons);
+	} else if (s[0] == 0x0d) {	/* return */
+		/* do nothing on current stage */
+	} else {	/* normal character */
+		putfonts8_asc_sht(sht_cons, *cursor_x, *cursor_y, COL8_FFFFFF, COL8_000000, s, 1);
+		*cursor_x += 8;
+		if (*cursor_x == 8 + DEFAULT_CONS_XSIZE - 16) {
+			*cursor_x = 8;
+			*cursor_y = cons_newline(*cursor_y, sht_cons);
 		}
-		size -= 512;
-		buf += 512;
-		clustno = fat[clustno];
 	}
-	return;
 }
 
 /* cat command */
 int cat(struct SHEET *sht_cons, char cmdline[], int cursor_y, int *fat){
 
-	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);
+	struct FILEINFO *finfo = file_search(cmdline);
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
-	char s[50];
-	int x, y;
+	char s[2];
 
-	/* prepare filename */
-		for (y = 0; y < 11; y++) {
-			s[y] = ' ';
+	if (finfo != 0) {
+		/* case of finding file */
+		char *p = (char *) memman_alloc_4k(memman, finfo->size);
+		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
+		int cursor_x = 8;
+		for (int y = 0; y < finfo->size; y++) {
+			s[0] = p[y];
+			s[1] = 0;
+			cons_putchar(sht_cons, &cursor_x, &cursor_y, s);
+			memman_free_4k(memman, (int) p, finfo->size);
 		}
-		y = 0;
-		for (x = 4; y < 11 && cmdline[x] != 0; x++) {
-			if (cmdline[x] == '.' && y <= 8) {
-				y = 8;
-			} else {
-				s[y] = cmdline[x];
-				if ('a' <= s[y] && s[y] <= 'z') {
-					/* convert capitals character */
-					s[y] -= 0x20;
-				}
-				y++;
-			}
-		}
-		/* look for file */
-		for (x = 0; x < 224 ;) {
-			if (finfo[x].name[0] == 0x00) {
-				break;
-			}
-			if ((finfo[x].type & 0x18) == 0) {
-				for (y = 0; y < 11; y++) {
-					if (finfo[x].name[y] != s[y]) {
-						goto type_next_file;
-					}
-				}
-				break;
-			}
-type_next_file:
-			x++;
-		}
-		if (x < 224 && finfo[x].name[0] != 0x00) {
-			/* case of finding file */
-			char *p = (char *) memman_alloc_4k(memman, finfo[x].size);
-			file_loadfile(finfo[x].clustno, finfo[x].size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
-			int cursor_x = 8;
-			for (y = 0; y < finfo[x].size; y++) {
-				s[0] = p[y];
-				s[1] = 0;
-				if (s[0] == 0x09) {	/* tab */
-					for (;;) {
-						putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
-						cursor_x += 8;
-						if (cursor_x == 8 + DEFAULT_CONS_XSIZE - 16) {
-							cursor_x = 8;
-							cursor_y = cons_newline(cursor_y, sht_cons);
-						}
-						if (((cursor_x - 8) & 0x1f) == 0) {
-							break;	/* if 0 mod 32, break */
-						}
-					}
-				} else if (s[0] == 0x0a) {	/* new line */
-					cursor_x = 8;
-					cursor_y = cons_newline(cursor_y, sht_cons);
-				} else if (s[0] == 0x0d) {	/* return */
-					/* do nothing on current stage */
-				} else {	/* normal character */
-					putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, s, 1);
-					cursor_x += 8;
-					if (cursor_x == 8 + DEFAULT_CONS_XSIZE - 16) {
-						cursor_x = 8;
-						cursor_y = cons_newline(cursor_y, sht_cons);
-					}
-				}
-				memman_free_4k(memman, (int) p, finfo[x].size);
-			}
-		} else {
-			/* case of cannot finding file */
-			putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
-			cursor_y = cons_newline(cursor_y, sht_cons);
-		}
+	} else {
+		/* case of cannot finding file */
+		putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
+		cursor_y = cons_newline(cursor_y, sht_cons);
+	}
+
 	cursor_y = cons_newline(cursor_y, sht_cons);
 	return cursor_y;
 }

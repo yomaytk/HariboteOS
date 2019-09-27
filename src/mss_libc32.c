@@ -5,7 +5,7 @@
 #include"mss_libc32.h"
 
 
-/*===== sprint‚Ì•â•ŠÖ” =====*/
+/*===== sub method of sprint =====*/
 int sub_sp(char *s, int arg, int dig){
 	
 	int a = arg, d = 0, f = 0, b;
@@ -26,7 +26,7 @@ int sub_sp(char *s, int arg, int dig){
 	}
 	return (d+f);
 }
-/*===== sprintf‚Ì‘ã‘ÖŠÖ” =====*/
+/*===== alternative method of sprintf =====*/
 void sprint(char *s, char *ss, ...){
 
 	va_list itr;

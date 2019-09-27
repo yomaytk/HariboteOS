@@ -319,6 +319,10 @@ extern char keytable1[0x80];
 
 #define	ADR_DISKIMG		0x00100000
 
+void console_main(struct SHEET *sht_cons, unsigned int memtotal);
+
+/* ===== file.c ===== */
+
 struct FILEINFO {
 	unsigned char name[8], ext[3], type;
 	char reserve[10];
@@ -326,4 +330,6 @@ struct FILEINFO {
 	unsigned int size;
 };
 
-void console_main(struct SHEET *sht_cons, unsigned int memtotal);
+void file_readfat(int *fat, unsigned char *img);
+void file_loadfile(int clustno, int size, char *buf, int *fat, char *img);
+struct FILEINFO *file_search(char cmdline[]);
