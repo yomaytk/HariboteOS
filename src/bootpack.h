@@ -202,6 +202,10 @@ void putfonts8_asc_sht(struct SHEET *sht, int x, int y, int c, int b, char *s, i
 #define COL8_008484		14
 #define COL8_848484		15
 
+#define DEFAULT_CONS_XSIZE		512
+#define DEFAULT_CONS_YSIZE		330
+
+
 static char keytable0[0x80] = {
 		0,   0,   '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '^', 0,   0,
 		'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '@', '[', 0,   0,   'A', 'S',

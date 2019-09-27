@@ -90,10 +90,10 @@ void main(){
 
 	/* sht_cons */
 	sht_cons = sheet_alloc(shtctl);
-	buf_cons = (unsigned char *) memman_alloc_4k(memman, 256 * 165);
-	sheet_setbuf(sht_cons, buf_cons, 256, 165, -1); /* “§–¾F‚È‚µ */
-	make_window8(buf_cons, 256, 165, "console", 0);
-	make_textbox8(sht_cons, 8, 28, 240, 128, COL8_000000);
+	buf_cons = (unsigned char *) memman_alloc_4k(memman, DEFAULT_CONS_XSIZE * DEFAULT_CONS_YSIZE);
+	sheet_setbuf(sht_cons, buf_cons, DEFAULT_CONS_XSIZE, DEFAULT_CONS_YSIZE, -1); /* “§–¾F‚È‚µ */
+	make_window8(buf_cons, DEFAULT_CONS_XSIZE, DEFAULT_CONS_YSIZE, "console", 0);
+	make_textbox8(sht_cons, 8, 28, DEFAULT_CONS_XSIZE - 16, DEFAULT_CONS_YSIZE - 37, COL8_000000);
 	task_cons = task_alloc();
 	task_cons->tss.esp = memman_alloc_4k(memman, 64 * 1024) + 64 * 1024 - 12;
 	task_cons->tss.eip = (int) &console_main;
