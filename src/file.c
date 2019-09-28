@@ -49,7 +49,7 @@ struct FILEINFO *file_search(char cmdline[]){
 		s[y] = ' ';
 	}
 	y = 0;
-	for (x = 4; y < 11 && cmdline[x] != 0; x++) {
+	for (x = 0; y < 11 && cmdline[x] != 0; x++) {
 		if (cmdline[x] == '.' && y <= 8) {
 			y = 8;
 		} else {

@@ -70,3 +70,11 @@ debug :
 src_only :
 	$(MAKE) clean
 	-$(DEL) os.img
+
+# test
+test.o : test.c Makefile
+	gcc test.c -o test.o
+
+te: test.o Makefile
+	./test.o
+	rm test.o
