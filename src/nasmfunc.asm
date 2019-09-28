@@ -1,10 +1,5 @@
-; naskfunc
-; TAB=4
 
-;[FORMAT "WCOFF"]				; オブジェクトファイルを作るモード	
-;[INSTRSET "i486p"]				; 486の命令まで使いたいという記述
-[BITS 32]						; 32ビットモード用の機械語を作らせる
-;[FILE "naskfunc.nas"]			; ソースファイル名情報
+[BITS 32]						; make machine language for 32bit 
 
 		global	io_hlt, io_cli, io_sti, io_stihlt
 		global	io_in8,  io_in16,  io_in32
@@ -15,9 +10,11 @@
 		global  asm_inthandler20
 		global	load_cr0, store_cr0
 		global  load_tr
-		global	farjmp
+		global	farjmp, farcall
 		global	memtest_sub, mts_loop, mts_fin
 		extern	inthandler21, inthandler27, inthandler2c, inthandler20
+		global	asm_cons_putchar
+		extern 	cons_putchar
 
 
 section .text
@@ -209,7 +206,21 @@ mts_fin:
 		POP		EDI
 		RET
 
-farjmp:		; void farjmp(int eip, int cs);
+farjmp:		; void farjmp(int eip, int cs)
 		JMP		FAR	[ESP+4]				; eip, cs
 		RET
 
+farcall:	; void farcall(int eip, int cs)
+		call 	far[esp+4]
+		ret
+
+asm_cons_putchar:
+		sti
+		push	1
+		; MOV		eax, 100
+		and 	eax, 0xff
+		push 	eax
+		push 	DWORD [0x0fec]
+		call 	cons_putchar
+		add 	esp, 12
+		iretd

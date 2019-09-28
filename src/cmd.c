@@ -6,61 +6,97 @@
 #include"mss_libc32.h"
 
 
+void cons_putchar(struct CONSOLE *cons, int ch, int move){
+
+	char s[2];
+	s[0] = ch;
+	s[1] = 0;
+
+	if (s[0] == 0x09) {	/* tab */
+		for (;;) {
+			putfonts8_asc_sht(cons->sht, cons->cur_x, cons->cur_y, COL8_FFFFFF, COL8_000000, " ", 1);
+			cons->cur_x += 8;
+			if (cons->cur_x == 8 + DEFAULT_CONS_XSIZE - 16) {
+				cons->cur_x = 24;
+				cons_newline(cons);
+			}
+			if (((cons->cur_x - 8) & 0x1f) == 0) {
+				break;	/* if 0 mod 32, break */
+			}
+		}
+	} else if (s[0] == 0x0a) {	/* new line */
+		cons->cur_x = 24;
+		cons_newline(cons);
+	} else if (s[0] == 0x0d) {	/* return */
+		/* do nothing on current stage */
+	} else {	/* normal character */
+		putfonts8_asc_sht(cons->sht, cons->cur_x, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 1);
+		if(move != 0){
+			cons->cur_x += 8;
+			if (cons->cur_x == 8 + DEFAULT_CONS_XSIZE - 24) {
+				cons->cur_x = 8;
+				cons_newline(cons);
+			}
+		}
+	}
+}
+
 /* console scroll */
-int cons_newline(int cursor_y, struct SHEET *sht_cons){
+void cons_newline(struct CONSOLE *cons){
 	
-	if (cursor_y < 28 + DEFAULT_CONS_YSIZE - 69) {
-		cursor_y += 16;
+	if (cons->cur_y < 28 + DEFAULT_CONS_YSIZE - 69) {
+		cons->cur_y += 16;
+		cons->cur_x = 8;
 	}else{
 		/* scroll */
 		/* overwrite lines except for last line*/
 		for (int y = 28; y < 28 + DEFAULT_CONS_YSIZE - 53; y++) {
 			for (int x = 8; x < 8 + DEFAULT_CONS_XSIZE - 16; x++) {
-				sht_cons->buf[x + y * sht_cons->bxsize] = sht_cons->buf[x + (y + 16) * sht_cons->bxsize];
+				cons->sht->buf[x + y * cons->sht->bxsize] = cons->sht->buf[x + (y + 16) * cons->sht->bxsize];
 			}
 		}
 		/* overwrite last line by black */
 		for (int y = 28 + DEFAULT_CONS_YSIZE - 53; y < 28 + DEFAULT_CONS_YSIZE - 37; y++) {
 			for (int x = 8; x < 8 + DEFAULT_CONS_XSIZE - 16; x++) {
-				sht_cons->buf[x + y * sht_cons->bxsize] = COL8_000000;
+				cons->sht->buf[x + y * cons->sht->bxsize] = COL8_000000;
 			}
 		}
-		sheet_refresh(sht_cons, 8, 28, 8 + DEFAULT_CONS_XSIZE - 16, 28 + DEFAULT_CONS_YSIZE - 37);
+		cons->cur_x = 8;
+		sheet_refresh(cons->sht, 8, 28, 8 + DEFAULT_CONS_XSIZE - 16, 28 + DEFAULT_CONS_YSIZE - 37);
 	}
-	return cursor_y;
 }
 
 /* mem comamnd */
-int mem(struct SHEET *sht_cons, unsigned int memtotal, int cursor_y){
+void mem(struct CONSOLE *cons, unsigned int memtotal){
 
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	char s[50];
 
 	sprint(s, "total   %dMB", memtotal / (1024 * 1024));
-	putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cursor_y = cons_newline(cursor_y, sht_cons);
+	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
+	cons_newline(cons);
 	sprint(s, "free %dKB", memman_total(memman) / 1024);
-	putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cursor_y = cons_newline(cursor_y, sht_cons);
-	cursor_y = cons_newline(cursor_y, sht_cons);
+	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
+	cons_newline(cons);
+	cons_newline(cons);
 
-	return cursor_y;
 }
 
 /* clear command */
-int clear(struct SHEET *sht_cons){
+void clear(struct CONSOLE *cons){
 
 	for (int y = 28; y < 28 + DEFAULT_CONS_YSIZE - 37; y++) {
 		for (int x = 8; x < 8 + DEFAULT_CONS_XSIZE - 16; x++) {
-			sht_cons->buf[x + y * sht_cons->bxsize] = COL8_000000;
+			cons->sht->buf[x + y * cons->sht->bxsize] = COL8_000000;
 		}
 	}
-	sheet_refresh(sht_cons, 8, 28, 8 + DEFAULT_CONS_XSIZE - 16, 28 + DEFAULT_CONS_XSIZE - 37);
-	return 28;
+	cons->cur_x = 8;
+	cons->cur_y = 28;
+	sheet_refresh(cons->sht, 8, 28, 8 + DEFAULT_CONS_XSIZE - 16, 28 + DEFAULT_CONS_XSIZE - 37);
 }
 
 /* ls command */
-int ls(struct SHEET *sht_cons, int cursor_y){
+void ls(struct CONSOLE *cons){
 
 	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);
 	char s[50];
@@ -78,48 +114,16 @@ int ls(struct SHEET *sht_cons, int cursor_y){
 				s[9] = finfo[x].ext[0];
 				s[10] = finfo[x].ext[1];
 				s[11] = finfo[x].ext[2];
-				putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, s, 30);
-				cursor_y = cons_newline(cursor_y, sht_cons);
+				putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
+				cons_newline(cons);
 			}
 		}
 	}
-	cursor_y = cons_newline(cursor_y, sht_cons);
-
-	return cursor_y;
-
-}
-
-void cons_putchar(struct SHEET *sht_cons, int *cursor_x, int *cursor_y, char s[]){
-
-	if (s[0] == 0x09) {	/* tab */
-		for (;;) {
-			putfonts8_asc_sht(sht_cons, *cursor_x, *cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
-			*cursor_x += 8;
-			if (*cursor_x == 8 + DEFAULT_CONS_XSIZE - 16) {
-				*cursor_x = 8;
-				*cursor_y = cons_newline(*cursor_y, sht_cons);
-			}
-			if (((*cursor_x - 8) & 0x1f) == 0) {
-				break;	/* if 0 mod 32, break */
-			}
-		}
-	} else if (s[0] == 0x0a) {	/* new line */
-		*cursor_x = 8;
-		*cursor_y = cons_newline(*cursor_y, sht_cons);
-	} else if (s[0] == 0x0d) {	/* return */
-		/* do nothing on current stage */
-	} else {	/* normal character */
-		putfonts8_asc_sht(sht_cons, *cursor_x, *cursor_y, COL8_FFFFFF, COL8_000000, s, 1);
-		*cursor_x += 8;
-		if (*cursor_x == 8 + DEFAULT_CONS_XSIZE - 16) {
-			*cursor_x = 8;
-			*cursor_y = cons_newline(*cursor_y, sht_cons);
-		}
-	}
+	cons_newline(cons);
 }
 
 /* cat command */
-int cat(struct SHEET *sht_cons, char cmdline[], int cursor_y, int *fat){
+void cat(struct CONSOLE *cons, char cmdline[], int *fat){
 
 	struct FILEINFO *finfo = file_search(cmdline);
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
@@ -129,32 +133,30 @@ int cat(struct SHEET *sht_cons, char cmdline[], int cursor_y, int *fat){
 		/* case of finding file */
 		char *p = (char *) memman_alloc_4k(memman, finfo->size);
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
-		int cursor_x = 8;
+		cons->cur_x = 8;
 		for (int y = 0; y < finfo->size; y++) {
 			s[0] = p[y];
 			s[1] = 0;
-			cons_putchar(sht_cons, &cursor_x, &cursor_y, s);
+			cons_putchar(cons, (int) s[0], 1);
 			memman_free_4k(memman, (int) p, finfo->size);
 		}
 	} else {
 		/* case of cannot finding file */
-		putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
-		cursor_y = cons_newline(cursor_y, sht_cons);
+		putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
+		cons_newline(cons);
 	}
-
-	cursor_y = cons_newline(cursor_y, sht_cons);
-	return cursor_y;
+	cons_newline(cons);
 }
 
 /* execution hlt.bin */
-int hlt_exe(struct SHEET *sht_cons, int cursor_y, int *fat){
+void sample1_exe(struct CONSOLE *cons, int *fat){
 
 	struct FILEINFO *finfo = (struct FILEINFO *) (ADR_DISKIMG + 0x002600);	
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;
 
 	int x, y;
-	char s[] = "HLT     BIN";
+	char s[] = "SAMPLE1 BIN";
 
 		for (x = 0; x < 224 ;) {
 			if (finfo[x].name[0] == 0x00) {
@@ -176,38 +178,35 @@ hlt_next_file:
 			char *p = (char *) memman_alloc_4k(memman, finfo[x].size);
 			file_loadfile(finfo[x].clustno, finfo[x].size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 			set_segmdesc(gdt + 1003, finfo[x].size - 1, (int) p, AR_CODE32_ER);
-			farjmp(0, 1003 * 8);
+			farcall(0, 1003 * 8);
 			memman_free_4k(memman, (int) p, finfo[x].size);
 		} else {
 			/* case of cannot finding file */
-			putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
-			cursor_y = cons_newline(cursor_y, sht_cons);
+			putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
+			cons_newline(cons);
 		}
-	cursor_y = cons_newline(cursor_y, sht_cons);
-	return cursor_y;
+	cons_newline(cons);
 }
 
 /* All command set */
-int command_set(struct SHEET *sht_cons, char cmdline[], char cmd_size, unsigned int memtotal, int cursor_y, int *fat){
+void command_set(struct CONSOLE *cons, char cmdline[], char cmd_size, unsigned int memtotal, int *fat){
 
 	if (strcomp(cmdline, "mem", cmd_size, 3) == 0){
-		return mem(sht_cons, memtotal, cursor_y);
+		mem(cons, memtotal);
 	}else if(strcomp(cmdline, "clear", cmd_size, 5) == 0){
-		return clear(sht_cons);
+		clear(cons);
 	}else if(strcomp(cmdline, "ls", cmd_size, 2) == 0){
-		return ls(sht_cons, cursor_y);
+		ls(cons);
 	}else if (strcomp(cmdline, "cat ", 4, 4) == 0) {
-		return cat(sht_cons, cmdline, cursor_y, fat);
+		cat(cons, cmdline, fat);
 	}else if(strcomp(cmdline, "hlt", 3, 3) == 0){
-		hlt_exe(sht_cons, cursor_y, fat);
+		sample1_exe(cons, fat);
 	}else if (cmdline[0] != 0) {
 		/* not command or empty line */
-		putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
-		cursor_y = cons_newline(cursor_y, sht_cons);
-		cursor_y = cons_newline(cursor_y, sht_cons);
-		return cursor_y;
+		putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
+		cons_newline(cons);
+		cons_newline(cons);
 	}
-	return cursor_y;	/* error */
 }
 
 /* console_main */
@@ -216,8 +215,16 @@ void console_main(struct SHEET *sht_cons, unsigned int memtotal)
 	struct TIMER *timer;
 	struct TASK *task = task_now();
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+	/* console */
+	struct CONSOLE cons;
+	cons.sht = sht_cons;
+	cons.cur_x = 8;
+	cons.cur_y = 28;
+	cons.cur_c = -1;
+	*((int *) 0x0fec) = (int) &cons;
 
-	int fifobuf[128], cursor_x = 24, cursor_y = 28, cursor_c = -1;
+	/* interruption buffer of keyboard, mouse, timer etc...*/
+	int fifobuf[128];
 	fifo32_init(&task->fifo, 128, fifobuf, task);
 	char cmdline[100], cmd_size = 0;
 
@@ -228,8 +235,8 @@ void console_main(struct SHEET *sht_cons, unsigned int memtotal)
 	timer_init(timer, &task->fifo, 1);
 	timer_settime(timer, 50);
 
-	putfonts8_asc_sht(sht_cons, 8, 28, COL8_FFFFFF, COL8_000000, "$", 1);
-	putfonts8_asc_sht(sht_cons, 16, 28, COL8_FFFFFF, COL8_000000, ">", 1);
+	cons_putchar(&cons, '$', 1);
+	cons_putchar(&cons, '>', 1);
 
 	for (;;) {
 		io_cli();
@@ -244,52 +251,51 @@ void console_main(struct SHEET *sht_cons, unsigned int memtotal)
 			if(256 <= data && data <= 512){
 				if (data == 8 + 256) {
 					/* back space key */
-					if(cursor_x > 24){
-						putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
-						cursor_x -= 8;
+					if(cons.cur_x > 24){
+						cons_putchar(&cons, ' ', 0);
+						cons.cur_x -= 8;
 						cmd_size--;
 					}
 				}else if(data == 10 + 256){
 					/* enter key */
 					/*  cursor delete */
-					putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, " ", 1);
-					cmdline[cursor_x / 8 - 3] = 0;
-					cursor_y = cons_newline(cursor_y, sht_cons);
+					cons_putchar(&cons, ' ', 1);					
+					cmdline[cons.cur_x / 8 - 3] = 0;
+					cons_newline(&cons);
 					/* command */
-					cursor_y = command_set(sht_cons, cmdline, cmd_size, memtotal, cursor_y, fat);
+					command_set(&cons, cmdline, cmd_size, memtotal, fat);
 					/* pronpt display */
-					putfonts8_asc_sht(sht_cons, 8, cursor_y, COL8_FFFFFF, COL8_000000, "$", 1);
-					putfonts8_asc_sht(sht_cons, 16, cursor_y, COL8_FFFFFF, COL8_000000, ">", 1);
-					cursor_x = 24;
+					cons_putchar(&cons, '$', 1);
+					cons_putchar(&cons, '>', 1);
+					cons.cur_x = 24;
 					cmd_size = 0;
-				}else if (cursor_x < DEFAULT_CONS_XSIZE - 16) {
+				}else if (cons.cur_x < DEFAULT_CONS_XSIZE - 16) {
 					/* normal character */
 					s[0] = data - 256;
 					s[1] = 0;
-					cmdline[cursor_x/8 - 3] = s[0];
+					cmdline[cons.cur_x/8 - 3] = s[0];
 					cmd_size++;
-					putfonts8_asc_sht(sht_cons, cursor_x, cursor_y, COL8_FFFFFF, COL8_000000, s, 1);
-					cursor_x += 8;
+					cons_putchar(&cons, s[0], 1);
 				}
 			}else if(data == 2){
-				cursor_c = COL8_000000;
+				cons.cur_c = COL8_000000;
 			}else if(data == 3){
-				cursor_c = -1;
-				boxfill8(sht_cons->buf, sht_cons->bxsize, COL8_000000, cursor_x, cursor_y, cursor_x + 7, 43);
-				sheet_refresh(sht_cons, cursor_x, cursor_y, cursor_x + 8, 44);
+				cons.cur_c = -1;
+				boxfill8(cons.sht->buf, cons.sht->bxsize, COL8_000000, cons.cur_x, cons.cur_y, cons.cur_x + 7, 43);
 			}else if (data <= 1) { /* cursor timer */
 				if (data != 0) {
 					timer_init(timer, &task->fifo, 0); /* next 0 */
-					if(cursor_c >= 0)	cursor_c = COL8_FFFFFF;
+					if(cons.cur_c >= 0)	cons.cur_c = COL8_FFFFFF;
 				} else {
 					timer_init(timer, &task->fifo, 1); /* next 1 */
-					if(cursor_c >= 0)	cursor_c = COL8_000000;
+					if(cons.cur_c >= 0)	cons.cur_c = COL8_000000;
 				}
 				timer_settime(timer, 50);
-				if(cursor_c >= 0){
-					boxfill8(sht_cons->buf, sht_cons->bxsize, cursor_c, cursor_x, cursor_y, cursor_x + 7, cursor_y + 15);
-					sheet_refresh(sht_cons, cursor_x, cursor_y, cursor_x + 8, cursor_y + 16);
+				/* cursor display */
+				if(cons.cur_c >= 0){
+					boxfill8(cons.sht->buf, cons.sht->bxsize, cons.cur_c, cons.cur_x, cons.cur_y, cons.cur_x + 7, cons.cur_y + 15);
 				}
+				sheet_refresh(cons.sht, cons.cur_x, cons.cur_y, cons.cur_x + 8, cons.cur_y + 16);
 			}
 		}
 	}

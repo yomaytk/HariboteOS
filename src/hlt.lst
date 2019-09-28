@@ -1,4 +1,0 @@
-     1 00000000 FA                      	cli
-     2                                  fin:
-     3 00000001 F4                      	hlt
-     4 00000002 EBFD                    	JMP fin

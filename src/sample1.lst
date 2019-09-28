@@ -1,0 +1,14 @@
+     1                                  [BITS 32]
+     2                                  
+     3                                  hello:
+     4 00000000 B068                    		mov 	al,'h'
+     5 00000002 CD40                    		int		0x40
+     6 00000004 B065                    		mov 	al,'e'
+     7 00000006 CD40                    		int		0x40		
+     8 00000008 B06C                    		mov 	al,'l'
+     9 0000000A CD40                    		int		0x40		
+    10 0000000C B06C                    		mov 	al,'l'
+    11 0000000E CD40                    		int		0x40
+    12 00000010 B06F                    		mov 	al,'o'
+    13 00000012 CD40                    		int		0x40		
+    14 00000014 CB                      		retf

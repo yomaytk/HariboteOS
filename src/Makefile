@@ -27,17 +27,17 @@ hankaku.c : convert_hankaku.o hankaku.txt Makefile
 	./convert_hankaku.o
 
 bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
+	gcc -Wl,-Map=bootpack.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
 	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c sheet.c timer.c  \
 	taskfunc.c mtask.c cmd.c mss_libc32.c file.c nasmfunc.o -o bootpack.o
 
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
 
-os.img : ipl10.bin os.sys hlt.bin Makefile
+os.img : ipl10.bin os.sys sample1.bin Makefile
 	mformat -f 1440 -C -B ipl10.bin -i os.img ::
 	mcopy os.sys -i os.img ::
-	mcopy hlt.bin -i os.img ::
+	mcopy sample1.bin -i os.img ::
 
 
 img :
@@ -56,7 +56,6 @@ install :
 clean :
 	-$(DEL) *.bin
 	-$(DEL) *.lst
-	-$(DEL) *.gas
 	-$(DEL)	*.o
 	-$(DEL) *.img
 	-$(DEL) bootpack.map

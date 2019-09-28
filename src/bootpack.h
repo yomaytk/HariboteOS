@@ -30,10 +30,12 @@ void asm_inthandler21();
 void asm_inthandler27();
 void asm_inthandler2c();
 void asm_inthandler20();
+void asm_cons_putchar();
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void mts_loop();
 void mts_fin();
 void farjmp(int eip, int cs);
+void farcall(int eip, int cs);
 
 /*===== dsctbl.c =====*/
 
@@ -319,7 +321,15 @@ extern char keytable1[0x80];
 
 #define	ADR_DISKIMG		0x00100000
 
+struct CONSOLE {
+	struct SHEET *sht;
+	int cur_x, cur_y, cur_c;
+};
+
 void console_main(struct SHEET *sht_cons, unsigned int memtotal);
+void cons_putchar(struct CONSOLE *cons, int ch, int move);
+void cons_newline(struct CONSOLE *cons);
+
 
 /* ===== file.c ===== */
 
