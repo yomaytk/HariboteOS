@@ -185,7 +185,16 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 	if (finfo != 0) {
 		/* file can finding */
 		char *p = (char *) memman_alloc_4k(memman, finfo->size);
+		*((int *) 0x0fe8) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
+		if(finfo->size >= 8 && strcomp((p+4), "main", 4, 4) == 0){
+			p[0] = 0xe8;
+			p[1] = 0x16;
+			p[2] = 0x00;
+			p[3] = 0x00;
+			p[4] = 0x00;
+			p[5] = 0xcb;
+		}
 		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);
 		farcall(0, 1003 * 8);
 		memman_free_4k(memman, (int) p, finfo->size);
@@ -218,14 +227,15 @@ void command_set(struct CONSOLE *cons, char cmdline[], char cmd_size, unsigned i
 
 void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax){
 	
+	int cs_base = *((int *) 0x0fe8);
 	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
 
 	if(edx == 1){
 		cons_putchar(cons, eax & 0xff, 1);
 	}else if(edx == 2){
-		cons_putstr0(cons, (char *) ebx);
+		cons_putstr0(cons, (char *) ebx + cs_base);
 	}else if(edx == 3){
-		cons_putstr1(cons, (char *) ebx, ecx);
+		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
 	}
 
 	return;

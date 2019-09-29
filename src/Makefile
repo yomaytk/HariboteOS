@@ -31,14 +31,21 @@ bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Mak
 	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c sheet.c timer.c  \
 	taskfunc.c mtask.c cmd.c mss_libc32.c file.c nasmfunc.o -o bootpack.o
 
+a.o : a_nasm.asm Makefile
+	nasm -g -f elf a_nasm.asm -o a.o
+
+app.o : a.c a.o Makefile
+	gcc -Wl,-Map=app.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g a.c a.o -o app.o
+
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
 
-os.img : ipl10.bin os.sys hello1.bin hello2.bin Makefile
+os.img : ipl10.bin os.sys hello1.bin hello2.bin app.o Makefile
 	mformat -f 1440 -C -B ipl10.bin -i os.img ::
 	mcopy os.sys -i os.img ::
 	mcopy hello1.bin -i os.img ::
 	mcopy hello2.bin -i os.img ::
+	mcopy app.o -i os.img ::
 
 
 img :
@@ -61,7 +68,6 @@ clean :
 	-$(DEL) *.img
 	-$(DEL) bootpack.map
 	-$(DEL) os.sys
-	-$(DEL) convert_hankaku.o
 	-$(DEL)	hankaku.c
 
 debug :
