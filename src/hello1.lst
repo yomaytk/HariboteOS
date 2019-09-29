@@ -1,0 +1,17 @@
+     1                                  [BITS 32]
+     2 00000000 B9[19000000]            		mov 	ecx,msg
+     3 00000005 BA01000000              		mov 	edx,1
+     4                                  
+     5                                  putloop:
+     6 0000000A 2E8A01                  		mov		al,[cs:ecx]
+     7 0000000D 3C00                    		cmp		al,0
+     8 0000000F 7407                    		je		fin
+     9 00000011 CD40                    		int 	0x40
+    10 00000013 83C101                  		add 	ecx,1
+    11 00000016 EBF2                    		jmp 	putloop
+    12                                  
+    13                                  fin:
+    14 00000018 CB                      		retf
+    15                                  
+    16                                  msg:
+    17 00000019 68656C6C6F00            		db		"hello",0

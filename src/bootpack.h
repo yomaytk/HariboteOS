@@ -31,6 +31,7 @@ void asm_inthandler27();
 void asm_inthandler2c();
 void asm_inthandler20();
 void asm_cons_putchar();
+void asm_os_api();
 unsigned int memtest_sub(unsigned int start, unsigned int end);
 void mts_loop();
 void mts_fin();

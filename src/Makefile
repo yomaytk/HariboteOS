@@ -34,10 +34,11 @@ bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Mak
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
 
-os.img : ipl10.bin os.sys sample1.bin Makefile
+os.img : ipl10.bin os.sys hello1.bin hello2.bin Makefile
 	mformat -f 1440 -C -B ipl10.bin -i os.img ::
 	mcopy os.sys -i os.img ::
-	mcopy sample1.bin -i os.img ::
+	mcopy hello1.bin -i os.img ::
+	mcopy hello2.bin -i os.img ::
 
 
 img :

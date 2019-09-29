@@ -15,6 +15,8 @@
 		extern	inthandler21, inthandler27, inthandler2c, inthandler20
 		global	asm_cons_putchar
 		extern 	cons_putchar
+		global	asm_os_api
+		extern  os_api
 
 
 section .text
@@ -216,6 +218,7 @@ farcall:	; void farcall(int eip, int cs)
 
 asm_cons_putchar:
 		sti
+		pushad
 		push	1
 		; MOV		eax, 100
 		and 	eax, 0xff
@@ -223,4 +226,13 @@ asm_cons_putchar:
 		push 	DWORD [0x0fec]
 		call 	cons_putchar
 		add 	esp, 12
+		popad
+		iretd
+
+asm_os_api:
+		pushad		;store register
+		pushad		;use on os_api
+		call	os_api
+		add 	esp, 32
+		popad
 		iretd

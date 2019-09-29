@@ -41,6 +41,26 @@ void cons_putchar(struct CONSOLE *cons, int ch, int move){
 	}
 }
 
+/* String display */
+void cons_putstr0(struct CONSOLE *cons, char *s){
+
+	for(; *s != 0;s++){
+		cons_putchar(cons, *s, 1);
+	}
+
+	return;
+}
+
+/* String display */
+void cons_putstr1(struct CONSOLE *cons, char *s, int len){
+
+	for(int i = 0;i < len;i++){
+		cons_putchar(cons, s[i], 1);
+	}
+
+	return;
+}
+
 /* console scroll */
 void cons_newline(struct CONSOLE *cons){
 	
@@ -64,6 +84,8 @@ void cons_newline(struct CONSOLE *cons){
 		cons->cur_x = 8;
 		sheet_refresh(cons->sht, 8, 28, 8 + DEFAULT_CONS_XSIZE - 16, 28 + DEFAULT_CONS_YSIZE - 37);
 	}
+
+	return;
 }
 
 /* mem comamnd */
@@ -72,14 +94,10 @@ void mem(struct CONSOLE *cons, unsigned int memtotal){
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	char s[50];
 
-	sprint(s, "total   %dMB", memtotal / (1024 * 1024));
-	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cons_newline(cons);
-	sprint(s, "free %dKB", memman_total(memman) / 1024);
-	putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
-	cons_newline(cons);
-	cons_newline(cons);
+	sprint(s, "total   %dMB\nfree %dKB\n\n", memtotal / (1024 * 1024), memman_total(memman) / 1024);
+	cons_putstr0(cons, s);
 
+	return;
 }
 
 /* clear command */
@@ -114,7 +132,7 @@ void ls(struct CONSOLE *cons){
 				s[9] = finfo[x].ext[0];
 				s[10] = finfo[x].ext[1];
 				s[11] = finfo[x].ext[2];
-				putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, s, 30);
+				cons_putstr0(cons, s);
 				cons_newline(cons);
 			}
 		}
@@ -134,16 +152,11 @@ void cat(struct CONSOLE *cons, char cmdline[], int *fat){
 		char *p = (char *) memman_alloc_4k(memman, finfo->size);
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 		cons->cur_x = 8;
-		for (int y = 0; y < finfo->size; y++) {
-			s[0] = p[y];
-			s[1] = 0;
-			cons_putchar(cons, (int) s[0], 1);
-			memman_free_4k(memman, (int) p, finfo->size);
-		}
+		cons_putstr1(cons, p, finfo->size);
+		memman_free_4k(memman, (int) p, finfo->size);
 	} else {
 		/* case of cannot finding file */
-		putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "File not found.", 15);
-		cons_newline(cons);
+		cons_putstr0(cons, "File not found.\n");
 	}
 	cons_newline(cons);
 }
@@ -197,13 +210,27 @@ void command_set(struct CONSOLE *cons, char cmdline[], char cmd_size, unsigned i
 	}else if (cmdline[0] != 0) {
 		/* not command or empty line */
 		if(app_exe(cons, fat, cmdline, cmd_size) == 0){
-			putfonts8_asc_sht(cons->sht, 8, cons->cur_y, COL8_FFFFFF, COL8_000000, "Bad command.", 12);
-			cons_newline(cons);
-			cons_newline(cons);
+			cons_putstr0(cons, "Bad command\n\n");
 		}
 	}
 
 }
+
+void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax){
+	
+	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+
+	if(edx == 1){
+		cons_putchar(cons, eax & 0xff, 1);
+	}else if(edx == 2){
+		cons_putstr0(cons, (char *) ebx);
+	}else if(edx == 3){
+		cons_putstr1(cons, (char *) ebx, ecx);
+	}
+
+	return;
+}
+
 
 /* console_main */
 void console_main(struct SHEET *sht_cons, unsigned int memtotal)
