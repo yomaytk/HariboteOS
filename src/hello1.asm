@@ -1,4 +1,4 @@
-[BITS 32]
+[bits 32]
 		mov 	ecx,msg
 		mov 	edx,1
 

@@ -30,6 +30,7 @@ void asm_inthandler21();
 void asm_inthandler27();
 void asm_inthandler2c();
 void asm_inthandler20();
+void asm_inthandler0d();
 void asm_cons_putchar();
 void asm_os_api();
 unsigned int memtest_sub(unsigned int start, unsigned int end);
@@ -331,6 +332,7 @@ struct CONSOLE {
 void console_main(struct SHEET *sht_cons, unsigned int memtotal);
 void cons_putchar(struct CONSOLE *cons, int ch, int move);
 void cons_newline(struct CONSOLE *cons);
+void cons_putstr0(struct CONSOLE *cons, char *s);
 
 
 /* ===== file.c ===== */
@@ -345,3 +347,7 @@ struct FILEINFO {
 void file_readfat(int *fat, unsigned char *img);
 void file_loadfile(int clustno, int size, char *buf, int *fat, char *img);
 struct FILEINFO *file_search(char cmdline[]);
+
+/* ===== exception.c ===== */
+
+int inthandler0d(int *esp);
