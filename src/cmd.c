@@ -166,6 +166,8 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo;
 	struct SEGMENT_DESCRIPTOR *gdt = (struct SEGMENT_DESCRIPTOR *) ADR_GDT;	
+	struct TASK *task = task_now();
+
 	int i = cmdsize;
 	char *name = cmdline;
 
@@ -196,9 +198,9 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 			p[4] = 0x00;
 			p[5] = 0xcb;
 		}
-		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);
-		set_segmdesc(gdt + 1004, 64*1024 - 1, (int) q, AR_DATA32_RW);
-		start_app(0, 1003*8, 64*1024, 1004*8);
+		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER + 0x60);
+		set_segmdesc(gdt + 1004, 64*1024 - 1, (int) q, AR_DATA32_RW + 0x60);
+		start_app(0, 1003*8, 64*1024, 1004*8, task->tss.esp0);
 		memman_free_4k(memman, (int) p, finfo->size);
 		memman_free_4k(memman, (int) q, 64*1024);
 		cons_newline(cons);
@@ -228,10 +230,11 @@ void command_set(struct CONSOLE *cons, char cmdline[], char cmd_size, unsigned i
 
 }
 
-void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax){
+int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax){
 	
 	int cs_base = *((int *) 0x0fe8);
 	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+	struct TASK *task = task_now();
 
 	if(edx == 1){
 		cons_putchar(cons, eax & 0xff, 1);
@@ -239,9 +242,11 @@ void os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int e
 		cons_putstr0(cons, (char *) ebx + cs_base);
 	}else if(edx == 3){
 		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
+	}else if(edx == 4){
+		return &(task->tss.esp0);
 	}
 
-	return;
+	return 0;
 }
 
 

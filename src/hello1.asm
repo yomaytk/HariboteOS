@@ -11,7 +11,8 @@ putloop:
 		jmp 	putloop
 
 fin:
-		retf
+		mov 	edx, 4
+		int 	0x40
 
 msg:
 		db		"hello",0

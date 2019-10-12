@@ -1,7 +1,7 @@
 
 破棄された入力セクション
 
- .eh_frame      0x0000000000000000       0x38 /tmp/ccBUl7yd.o
+ .eh_frame      0x0000000000000000       0x44 /tmp/ccQrwJJo.o
 
 メモリ設定
 
@@ -10,7 +10,8 @@
 
 リンカスクリプトおよびメモリマップ
 
-LOAD /tmp/ccBUl7yd.o
+LOAD /tmp/ccQrwJJo.o
+LOAD a.o
 
 .head           0x0000000000000000       0x24
                 0x0000000000000000        0x4 LONG 0x10000
@@ -18,47 +19,56 @@ LOAD /tmp/ccBUl7yd.o
                 0x0000000000000008        0x4 LONG 0x0
                 0x000000000000000c        0x4 LONG 0x310000
                 0x0000000000000010        0x4 LONG 0x0 SIZEOF (.data)
-                0x0000000000000014        0x4 LONG 0x32 LOADADDR (.data)
+                0x0000000000000014        0x4 LONG 0xa3 LOADADDR (.data)
                 0x0000000000000018        0x4 LONG 0xe9000000
-                0x000000000000001c        0x4 LONG 0x4 (main - 0x20)
+                0x000000000000001c        0x4 LONG 0x10 (main - 0x20)
                 0x0000000000000020        0x4 LONG 0x0
 
-.text           0x0000000000000024        0xe
+.text           0x0000000000000030       0x73
  *(.text)
- .text          0x0000000000000024        0xe /tmp/ccBUl7yd.o
-                0x0000000000000024                main
+ .text          0x0000000000000030       0x60 /tmp/ccQrwJJo.o
+                0x0000000000000030                main
+ .text          0x0000000000000090       0x13 a.o
+                0x0000000000000090                api_putchar
+                0x000000000000009c                api_end
 
-.data           0x0000000000310000        0x0 ロードアドレス 0x0000000000000032
+.data           0x0000000000310000        0x0 ロードアドレス 0x00000000000000a3
  *(.data)
- .data          0x0000000000310000        0x0 /tmp/ccBUl7yd.o
+ .data          0x0000000000310000        0x0 /tmp/ccQrwJJo.o
  *(.rodata*)
  *(.bss)
- .bss           0x0000000000310000        0x0 /tmp/ccBUl7yd.o
+ .bss           0x0000000000310000        0x0 /tmp/ccQrwJJo.o
 
 /DISCARD/
  *(.eh_frame)
-OUTPUT(crack1.o binary)
+OUTPUT(hello3.o binary)
 
 .debug_info     0x0000000000000000       0x37
- .debug_info    0x0000000000000000       0x37 /tmp/ccBUl7yd.o
+ .debug_info    0x0000000000000000       0x37 /tmp/ccQrwJJo.o
 
 .debug_abbrev   0x0000000000000000       0x2a
- .debug_abbrev  0x0000000000000000       0x2a /tmp/ccBUl7yd.o
+ .debug_abbrev  0x0000000000000000       0x2a /tmp/ccQrwJJo.o
 
 .debug_aranges  0x0000000000000000       0x20
  .debug_aranges
-                0x0000000000000000       0x20 /tmp/ccBUl7yd.o
+                0x0000000000000000       0x20 /tmp/ccQrwJJo.o
 
-.debug_line     0x0000000000000000       0x39
- .debug_line    0x0000000000000000       0x39 /tmp/ccBUl7yd.o
+.debug_line     0x0000000000000000       0x3e
+ .debug_line    0x0000000000000000       0x3e /tmp/ccQrwJJo.o
 
 .debug_str      0x0000000000000000       0x63
- .debug_str     0x0000000000000000       0x63 /tmp/ccBUl7yd.o
+ .debug_str     0x0000000000000000       0x63 /tmp/ccQrwJJo.o
 
 .comment        0x0000000000000000       0x2c
- .comment       0x0000000000000000       0x2c /tmp/ccBUl7yd.o
+ .comment       0x0000000000000000       0x2c /tmp/ccQrwJJo.o
 
 .note.GNU-stack
                 0x0000000000000000        0x0
  .note.GNU-stack
-                0x0000000000000000        0x0 /tmp/ccBUl7yd.o
+                0x0000000000000000        0x0 /tmp/ccQrwJJo.o
+
+.stab           0x0000000000000000       0x6c
+ .stab          0x0000000000000000       0x6c a.o
+
+.stabstr        0x0000000000000000        0xc
+ .stabstr       0x0000000000000000        0xc a.o

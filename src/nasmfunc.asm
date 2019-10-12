@@ -116,40 +116,16 @@ asm_inthandler21:
 		push	es
 		push	ds
 		pushad
-		mov		ax, ss
-		cmp 	ax, 1*8
-		jne 	.from_app
-; if segment is equal to 1*8, interrupt yield when application is execting
-		mov		eax, esp
-		push  	ss
+		mov 	eax, esp
 		push 	eax
-		mov		ax,ss		
+		mov		ax, ss
 		mov		ds, ax
 		mov		es, ax
 		call	inthandler21
-		add 	esp, 8
+		pop 	eax
 		popad
 		pop		ds
 		pop		es
-		iretd
-.from_app
-		mov 	eax, 1*8
-		mov 	ds, ax
-		mov 	ecx, [0xfe4]	; esp for OS system
-		add 	ecx, -8
-		mov 	[ecx+4], ss
-		mov 	[ecx], esp
-		mov 	ss, ax
-		mov 	es, ax
-		mov 	esp, ecx
-		call 	inthandler21
-		pop 	ecx		; pop esp for application
-		pop		eax		; pop ss for application
-		mov 	esp, ecx
-		mov 	ss, ax
-		popad
-		pop 	ds
-		pop 	es
 		iretd
 
 
@@ -157,40 +133,16 @@ asm_inthandler20:
 		push	es
 		push	ds
 		pushad
-		mov		ax, ss
-		cmp 	ax, 1*8
-		jne 	.from_app
-; if segment is equal to 1*8, interrupt yield when application is execting
-		mov		eax, esp
-		push  	ss
+		mov 	eax, esp
 		push 	eax
-		mov		ax,ss		
+		mov		ax, ss
 		mov		ds, ax
 		mov		es, ax
 		call	inthandler20
-		add 	esp, 8
+		pop 	eax
 		popad
 		pop		ds
 		pop		es
-		iretd
-.from_app
-		mov 	eax, 1*8
-		mov 	ds, ax
-		mov 	ecx, [0xfe4]	; esp for OS system
-		add 	ecx, -8
-		mov 	[ecx+4], ss
-		mov 	[ecx], esp
-		mov 	ss, ax
-		mov 	es, ax
-		mov 	esp, ecx
-		call 	inthandler20
-		pop 	ecx		; pop esp for application
-		pop		eax		; pop ss for application
-		mov 	esp, ecx
-		mov 	ss, ax
-		popad
-		pop 	ds
-		pop 	es
 		iretd
 
 
@@ -198,40 +150,16 @@ asm_inthandler27:
 		push	es
 		push	ds
 		pushad
-		mov		ax, ss
-		cmp 	ax, 1*8
-		jne 	.from_app
-; if segment is equal to 1*8, interrupt yield when application is execting
-		mov		eax, esp
-		push  	ss
+		mov 	eax, esp
 		push 	eax
-		mov		ax,ss
+		mov		ax, ss
 		mov		ds, ax
 		mov		es, ax
 		call	inthandler27
-		add 	esp, 8
+		pop 	eax
 		popad
 		pop		ds
 		pop		es
-		iretd
-.from_app
-		mov 	eax, 1*8
-		mov 	ds, ax
-		mov 	ecx, [0xfe4]	; esp for OS system
-		add 	ecx, -8
-		mov 	[ecx+4], ss
-		mov 	[ecx], esp
-		mov 	ss, ax
-		mov 	es, ax
-		mov 	esp, ecx
-		call 	inthandler27
-		pop 	ecx		; pop esp for application
-		pop		eax		; pop ss for application
-		mov 	esp, ecx
-		mov 	ss, ax
-		popad
-		pop 	ds
-		pop 	es
 		iretd
 
 
@@ -239,102 +167,36 @@ asm_inthandler2c:
 		push	es
 		push	ds
 		pushad
-		mov		ax, ss
-		cmp 	ax, 1*8
-		jne 	.from_app
-; if segment is equal to 1*8, interrupt yield when application is execting
-		mov		eax, esp
-		push  	ss
+		mov 	eax, esp
 		push 	eax
-		mov		ax,ss
+		mov		ax, ss
 		mov		ds, ax
 		mov		es, ax
 		call	inthandler2c
-		add 	esp, 8
+		pop 	eax
 		popad
 		pop		ds
 		pop		es
 		iretd
-.from_app
-		mov 	eax, 1*8
-		mov 	ds, ax
-		mov 	ecx, [0xfe4]	; esp for OS system
-		add 	ecx, -8
-		mov 	[ecx+4], ss
-		mov 	[ecx], esp
-		mov 	ss, ax
-		mov 	es, ax
-		mov 	esp, ecx
-		call 	inthandler2c
-		pop 	ecx		; pop esp for application
-		pop		eax		; pop ss for application
-		mov 	esp, ecx
-		mov 	ss, ax
-		popad
-		pop 	ds
-		pop 	es
-		iretd
 
 asm_inthandler0d:
-		STI
-		PUSH	ES
-		PUSH	DS
-		PUSHAD
-		MOV		AX,SS
-		CMP		AX,1*8
-		JNE		.from_app
-;	OSが動いているときに割り込まれたのでほぼ今までどおり
-		MOV		EAX,ESP
-		PUSH	SS				; 割り込まれたときのSSを保存
-		PUSH	EAX				; 割り込まれたときのESPを保存
-		MOV		AX,SS
-		MOV		DS,AX
-		MOV		ES,AX
-		CALL	inthandler0d
-		ADD		ESP,8
-		POPAD
-		POP		DS
-		POP		ES
-		ADD		ESP,4			; INT 0x0d では、これが必要
-		IRETD
-.from_app:
-;	アプリが動いているときに割り込まれた
-		CLI
-		MOV		EAX,1*8
-		MOV		DS,AX			; とりあえずDSだけOS用にする
-		MOV		ECX,[0xfe4]		; OSのESP
-		ADD		ECX,-8
-		MOV		[ECX+4],SS		; 割り込まれたときのSSを保存
-		MOV		[ECX  ],ESP		; 割り込まれたときのESPを保存
-		MOV		SS,AX
-		MOV		ES,AX
-		MOV		ESP,ECX
-		STI
-		CALL	inthandler0d
-		CLI
-		CMP		EAX,0
-		JNE		.kill
-		POP		ECX
-		POP		EAX
-		MOV		SS,AX			; SSをアプリ用に戻す
-		MOV		ESP,ECX			; ESPもアプリ用に戻す
-		POPAD
-		POP		DS
-		POP		ES
-		ADD		ESP,4			; INT 0x0d では、これが必要
-		IRETD
-.kill:
-;	アプリを異常終了させることにした
-		MOV		EAX,1*8			; OS用のDS/SS
-		MOV		ES,AX
-		MOV		SS,AX
-		MOV		DS,AX
-		MOV		FS,AX
-		MOV		GS,AX
-		MOV		ESP,[0xfe4]		; start_appのときのESPに無理やり戻す
-		STI			; 切り替え完了なので割り込み可能に戻す
-		POPAD	; 保存しておいたレジスタを回復
-		RET
+		push	es
+		push	ds
+		pushad
+		mov 	eax, esp
+		push 	eax
+		mov		ax, ss
+		mov		ds, ax
+		mov		es, ax
+		call	inthandler0d
+		cmp 	eax, 0
+		jne 	end_app
+		pop 	eax
+		popad
+		pop		ds
+		pop		es
+		add 	esp, 4
+		iretd
 
 memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; （EBX, ESI, EDI も使いたいので）
@@ -392,91 +254,47 @@ asm_cons_putchar:
 		popad
 		iretd
 
-; asm_os_api:								; push register to stack and call os_api
-; 		pushad		;store register
-; 		pushad		;use on os_api
-; 		call	os_api
-; 		add 	esp, 32
-; 		popad
-; 		iretd
-
 asm_os_api:
-		; 都合のいいことに最初から割り込み禁止になっている
-		PUSH	DS
-		PUSH	ES
-		PUSHAD		; 保存のためのPUSH
-		MOV		EAX,1*8
-		MOV		DS,AX			; とりあえずDSだけOS用にする
-		MOV		ECX,[0xfe4]		; OSのESP
-		ADD		ECX,-40
-		MOV		[ECX+32],ESP	; アプリのESPを保存
-		MOV		[ECX+36],SS		; アプリのSSを保存
+		sti
+		push	ds
+		push	es
+		pushad		; push for saving
+		pushad 		; push for use at os_api
+		mov 	ax, ss
+		mov		es, ax
+		mov		ds, ax
+		call	os_api
+		cmp 	eax, 0
+		jne 	end_app
+		add 	esp, 32
+		popad
+		pop		es
+		pop		ds
+		iretd		; sti automatically by this order
+end_app:
+		mov 	esp, [eax]
+		pushad
+		ret 	; back to app_exe
 
-; PUSHADした値をシステムのスタックにコピーする
-		MOV		EDX,[ESP   ]
-		MOV		EBX,[ESP+ 4]
-		MOV		[ECX   ],EDX	; hrb_apiに渡すためコピー
-		MOV		[ECX+ 4],EBX	; hrb_apiに渡すためコピー
-		MOV		EDX,[ESP+ 8]
-		MOV		EBX,[ESP+12]
-		MOV		[ECX+ 8],EDX	; hrb_apiに渡すためコピー
-		MOV		[ECX+12],EBX	; hrb_apiに渡すためコピー
-		MOV		EDX,[ESP+16]
-		MOV		EBX,[ESP+20]
-		MOV		[ECX+16],EDX	; hrb_apiに渡すためコピー
-		MOV		[ECX+20],EBX	; hrb_apiに渡すためコピー
-		MOV		EDX,[ESP+24]
-		MOV		EBX,[ESP+28]
-		MOV		[ECX+24],EDX	; hrb_apiに渡すためコピー
-		MOV		[ECX+28],EBX	; hrb_apiに渡すためコピー
-
-		MOV		ES,AX			; 残りのセグメントレジスタもOS用にする
-		MOV		SS,AX
-		MOV		ESP,ECX
-		STI			; やっと割り込み許可
-
-		CALL	os_api
-
-		MOV		ECX,[ESP+32]	; アプリのESPを思い出す
-		MOV		EAX,[ESP+36]	; アプリのSSを思い出す
-		CLI
-		MOV		SS,AX
-		MOV		ESP,ECX
-		POPAD
-		POP		ES
-		POP		DS
-		IRETD		; この命令が自動でSTIしてくれる
-
-
-start_app:		; void start_app(int eip, int cs, int esp, int ds);
-		pushad		; 32ビットレジスタを全部保存しておく
-		mov		eax,[esp+36]	; アプリ用のEIP
-		mov		ecx,[esp+40]	; アプリ用のCS
-		mov		edx,[esp+44]	; アプリ用のESP
-		mov		ebx,[esp+48]	; アプリ用のDS/SS
-		mov		[0xfe4],esp		; OS用のESP
-		cli			; 切り替え中に割り込みが起きてほしくないので禁止
-		mov		es,bx
-		mov		ss,bx
-		mov		ds,bx
-		mov		fs,bx
-		mov		gs,bx
-		mov		esp,edx
-		sti			; 切り替え完了なので割り込み可能に戻す
-		push	ecx				; far-CALLのためにPUSH（cs）
-		push	eax				; far-CALLのためにPUSH（eip）
-		call	far [esp]		; アプリを呼び出す
-
-;	アプリが終了するとここに帰ってくる
-
-		mov		eax,1*8			; OS用のDS/SS
-		cli			; また切り替えるので割り込み禁止
-		mov		es,ax
-		mov		ss,ax
-		mov		ds,ax
-		mov		fs,ax
-		mov		gs,ax
-		mov		esp,[0xfe4]
-		sti		; 切り替え完了なので割り込み可能に戻す
-		popad	; 保存しておいたレジスタを回復
-		ret
+start_app:		; void start_app(int eip, int cs, int esp, int ds, int tss.esp0);
+		pushad		; save all 32bit register
+		mov		eax, [esp+36]	
+		mov		ecx, [esp+40]	
+		mov		edx, [esp+44]	
+		mov		ebx, [esp+48]
+		mov		ebp, [esp+52]
+		mov 	[ebp], esp		; set esp and ss for OS system on [tss.esp0] and [tss.esp0+4]
+		mov 	[ebp+4], ss
+		mov		es, bx
+		mov		ds, bx
+		mov		fs, bx
+		mov		gs, bx
+		mov		esp, edx
+; adjustment stack retf to application
+		or 		ecx, 3	; set priviledge level 3 for segment of application ??? 
+		or 		ecx, 3	; same above
+		push 	ebx
+		push 	edx
+		push 	ecx
+		push 	eax
+		retf	; pop eax(eip for app) -> pop ecx(cs for app) -> jmp

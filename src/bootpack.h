@@ -38,7 +38,7 @@ void mts_loop();
 void mts_fin();
 void farjmp(int eip, int cs);
 void farcall(int eip, int cs);
-void start_app(int eip, int cs, int esp, int ds);
+void start_app(int eip, int cs, int esp, int ds, int esp0);
 
 /*===== dsctbl.c =====*/
 
@@ -350,4 +350,4 @@ struct FILEINFO *file_search(char cmdline[]);
 
 /* ===== exception.c ===== */
 
-int inthandler0d(int *esp);
+int *inthandler0d(int *esp);
