@@ -37,15 +37,19 @@ a.o : a_nasm.asm Makefile
 app.o : a.c a.o Makefile
 	gcc -Wl,-Map=app.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g a.c a.o -o app.o
 
+crack1.o : crack1.c Makefile
+	gcc -Wl,-Map=app.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g crack1.c -o crack1.o	
+
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
 
-os.img : ipl10.bin os.sys hello1.bin hello2.bin app.o Makefile
+os.img : ipl10.bin os.sys hello1.bin hello2.bin app.o crack1.o Makefile
 	mformat -f 1440 -C -B ipl10.bin -i os.img ::
 	mcopy os.sys -i os.img ::
 	mcopy hello1.bin -i os.img ::
 	mcopy hello2.bin -i os.img ::
 	mcopy app.o -i os.img ::
+	mcopy crack1.o -i os.img ::
 
 
 img :

@@ -37,6 +37,7 @@ void mts_loop();
 void mts_fin();
 void farjmp(int eip, int cs);
 void farcall(int eip, int cs);
+void start_app(int eip, int cs, int esp, int ds);
 
 /*===== dsctbl.c =====*/
 

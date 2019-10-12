@@ -185,6 +185,7 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 	if (finfo != 0) {
 		/* file can finding */
 		char *p = (char *) memman_alloc_4k(memman, finfo->size);
+		char *q = (char *) memman_alloc_4k(memman, 64*1024);
 		*((int *) 0x0fe8) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
 		if(finfo->size >= 8 && strcomp((p+4), "main", 4, 4) == 0){
@@ -196,8 +197,10 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 			p[5] = 0xcb;
 		}
 		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER);
-		farcall(0, 1003 * 8);
+		set_segmdesc(gdt + 1004, 64*1024 - 1, (int) q, AR_DATA32_RW);
+		start_app(0, 1003*8, 64*1024, 1004*8);
 		memman_free_4k(memman, (int) p, finfo->size);
+		memman_free_4k(memman, (int) q, 64*1024);
 		cons_newline(cons);
 		return 1;
 	}

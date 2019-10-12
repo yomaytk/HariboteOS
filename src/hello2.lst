@@ -1,9 +1,0 @@
-     1                                  [BITS 32]
-     2                                  
-     3 00000000 BB[0D000000]            		mov 	ebx,msg
-     4 00000005 BA02000000              		mov 	edx,2
-     5 0000000A CD40                    		int 	0x40
-     6 0000000C CB                      		retf
-     7                                  
-     8                                  msg:
-     9 0000000D 68656C6C6F00            		db "hello",0

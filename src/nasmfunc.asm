@@ -1,5 +1,5 @@
 
-[BITS 32]						; make machine language for 32bit 
+[bits 32]						; make machine language for 32bit 
 
 		global	io_hlt, io_cli, io_sti, io_stihlt
 		global	io_in8,  io_in16,  io_in32
@@ -11,6 +11,7 @@
 		global	load_cr0, store_cr0
 		global  load_tr
 		global	farjmp, farcall
+		global  start_app
 		global	memtest_sub, mts_loop, mts_fin
 		extern	inthandler21, inthandler27, inthandler2c, inthandler20
 		global	asm_cons_putchar
@@ -110,68 +111,169 @@ load_tr:		; void load_tr(int tr);
 		RET
 
 asm_inthandler21:
-		PUSH	ES
-		PUSH	DS
-		PUSHAD
-		MOV		EAX,ESP
-		PUSH	EAX
+		push	es
+		push	ds
+		pushad
+		mov		ax, ss
+		cmp 	ax, 1*8
+		jne 	.from_app
+; if segment is equal to 1*8, interrupt yield when application is execting
+		mov		eax, esp
+		push  	ss
+		push 	eax
 		MOV		AX,SS
-		MOV		DS,AX
-		MOV		ES,AX
-		CALL	inthandler21
-		POP		EAX
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
+		mov		ds, ax
+		mov		es, ax
+		call	inthandler21
+		add 	esp, 8
+		popad
+		pop		ds
+		pop		es
+		iretd
+.from_app
+		mov 	eax, 1*8
+		mov 	ds, ax
+		mov 	ecx, [0xfe4]	; esp for OS system
+		add 	ecx, -8
+		mov 	[ecx+4], ss
+		mov 	[ecx], esp
+		mov 	ss, ax
+		mov 	es, ax
+		mov 	esp, ecx
+		call 	inthandler21
+		pop 	ecx		; pop esp for application
+		pop		eax		; pop ss for application
+		mov 	esp, ecx
+		mov 	ss, ax
+		popad
+		pop 	ds
+		pop 	es
+		iretd
+
 
 asm_inthandler20:
-		PUSH	ES
-		PUSH	DS
-		PUSHAD
-		MOV		EAX,ESP
-		PUSH	EAX
+		push	es
+		push	ds
+		pushad
+		mov		ax, ss
+		cmp 	ax, 1*8
+		jne 	.from_app
+; if segment is equal to 1*8, interrupt yield when application is execting
+		mov		eax, esp
+		push  	ss
+		push 	eax
 		MOV		AX,SS
-		MOV		DS,AX
-		MOV		ES,AX
-		CALL	inthandler20
-		POP		EAX
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
+		mov		ds, ax
+		mov		es, ax
+		call	inthandler20
+		add 	esp, 8
+		popad
+		pop		ds
+		pop		es
+		iretd
+.from_app
+		mov 	eax, 1*8
+		mov 	ds, ax
+		mov 	ecx, [0xfe4]	; esp for OS system
+		add 	ecx, -8
+		mov 	[ecx+4], ss
+		mov 	[ecx], esp
+		mov 	ss, ax
+		mov 	es, ax
+		mov 	esp, ecx
+		call 	inthandler20
+		pop 	ecx		; pop esp for application
+		pop		eax		; pop ss for application
+		mov 	esp, ecx
+		mov 	ss, ax
+		popad
+		pop 	ds
+		pop 	es
+		iretd
+
 
 asm_inthandler27:
-		PUSH	ES
-		PUSH	DS
-		PUSHAD
-		MOV		EAX,ESP
-		PUSH	EAX
+		push	es
+		push	ds
+		pushad
+		mov		ax, ss
+		cmp 	ax, 1*8
+		jne 	.from_app
+; if segment is equal to 1*8, interrupt yield when application is execting
+		mov		eax, esp
+		push  	ss
+		push 	eax
 		MOV		AX,SS
-		MOV		DS,AX
-		MOV		ES,AX
-		CALL	inthandler27
-		POP		EAX
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
+		mov		ds, ax
+		mov		es, ax
+		call	inthandler27
+		add 	esp, 8
+		popad
+		pop		ds
+		pop		es
+		iretd
+.from_app
+		mov 	eax, 1*8
+		mov 	ds, ax
+		mov 	ecx, [0xfe4]	; esp for OS system
+		add 	ecx, -8
+		mov 	[ecx+4], ss
+		mov 	[ecx], esp
+		mov 	ss, ax
+		mov 	es, ax
+		mov 	esp, ecx
+		call 	inthandler27
+		pop 	ecx		; pop esp for application
+		pop		eax		; pop ss for application
+		mov 	esp, ecx
+		mov 	ss, ax
+		popad
+		pop 	ds
+		pop 	es
+		iretd
+
 
 asm_inthandler2c:
-		PUSH	ES
-		PUSH	DS
-		PUSHAD
-		MOV		EAX,ESP
-		PUSH	EAX
+		push	es
+		push	ds
+		pushad
+		mov		ax, ss
+		cmp 	ax, 1*8
+		jne 	.from_app
+; if segment is equal to 1*8, interrupt yield when application is execting
+		mov		eax, esp
+		push  	ss
+		push 	eax
 		MOV		AX,SS
-		MOV		DS,AX
-		MOV		ES,AX
-		CALL	inthandler2c
-		POP		EAX
-		POPAD
-		POP		DS
-		POP		ES
-		IRETD
+		mov		ds, ax
+		mov		es, ax
+		call	inthandler2c
+		add 	esp, 8
+		popad
+		pop		ds
+		pop		es
+		iretd
+.from_app
+		mov 	eax, 1*8
+		mov 	ds, ax
+		mov 	ecx, [0xfe4]	; esp for OS system
+		add 	ecx, -8
+		mov 	[ecx+4], ss
+		mov 	[ecx], esp
+		mov 	ss, ax
+		mov 	es, ax
+		mov 	esp, ecx
+		call 	inthandler2c
+		pop 	ecx		; pop esp for application
+		pop		eax		; pop ss for application
+		mov 	esp, ecx
+		mov 	ss, ax
+		popad
+		pop 	ds
+		pop 	es
+		iretd
+
+
 
 memtest_sub:	; unsigned int memtest_sub(unsigned int start, unsigned int end)
 		PUSH	EDI						; （EBX, ESI, EDI も使いたいので）
@@ -229,10 +331,91 @@ asm_cons_putchar:
 		popad
 		iretd
 
+; asm_os_api:								; push register to stack and call os_api
+; 		pushad		;store register
+; 		pushad		;use on os_api
+; 		call	os_api
+; 		add 	esp, 32
+; 		popad
+; 		iretd
+
 asm_os_api:
-		pushad		;store register
-		pushad		;use on os_api
-		call	os_api
-		add 	esp, 32
-		popad
-		iretd
+		; 都合のいいことに最初から割り込み禁止になっている
+		PUSH	DS
+		PUSH	ES
+		PUSHAD		; 保存のためのPUSH
+		MOV		EAX,1*8
+		MOV		DS,AX			; とりあえずDSだけOS用にする
+		MOV		ECX,[0xfe4]		; OSのESP
+		ADD		ECX,-40
+		MOV		[ECX+32],ESP	; アプリのESPを保存
+		MOV		[ECX+36],SS		; アプリのSSを保存
+
+; PUSHADした値をシステムのスタックにコピーする
+		MOV		EDX,[ESP   ]
+		MOV		EBX,[ESP+ 4]
+		MOV		[ECX   ],EDX	; hrb_apiに渡すためコピー
+		MOV		[ECX+ 4],EBX	; hrb_apiに渡すためコピー
+		MOV		EDX,[ESP+ 8]
+		MOV		EBX,[ESP+12]
+		MOV		[ECX+ 8],EDX	; hrb_apiに渡すためコピー
+		MOV		[ECX+12],EBX	; hrb_apiに渡すためコピー
+		MOV		EDX,[ESP+16]
+		MOV		EBX,[ESP+20]
+		MOV		[ECX+16],EDX	; hrb_apiに渡すためコピー
+		MOV		[ECX+20],EBX	; hrb_apiに渡すためコピー
+		MOV		EDX,[ESP+24]
+		MOV		EBX,[ESP+28]
+		MOV		[ECX+24],EDX	; hrb_apiに渡すためコピー
+		MOV		[ECX+28],EBX	; hrb_apiに渡すためコピー
+
+		MOV		ES,AX			; 残りのセグメントレジスタもOS用にする
+		MOV		SS,AX
+		MOV		ESP,ECX
+		STI			; やっと割り込み許可
+
+		CALL	os_api
+
+		MOV		ECX,[ESP+32]	; アプリのESPを思い出す
+		MOV		EAX,[ESP+36]	; アプリのSSを思い出す
+		CLI
+		MOV		SS,AX
+		MOV		ESP,ECX
+		POPAD
+		POP		ES
+		POP		DS
+		IRETD		; この命令が自動でSTIしてくれる
+
+
+start_app:		; void start_app(int eip, int cs, int esp, int ds);
+		pushad		; 32ビットレジスタを全部保存しておく
+		mov		eax,[esp+36]	; アプリ用のEIP
+		mov		ecx,[esp+40]	; アプリ用のCS
+		mov		edx,[esp+44]	; アプリ用のESP
+		mov		ebx,[esp+48]	; アプリ用のDS/SS
+		mov		[0xfe4],esp		; OS用のESP
+		cli			; 切り替え中に割り込みが起きてほしくないので禁止
+		mov		es,bx
+		mov		ss,bx
+		mov		ds,bx
+		mov		fs,bx
+		mov		gs,bx
+		mov		esp,edx
+		sti			; 切り替え完了なので割り込み可能に戻す
+		push	ecx				; far-CALLのためにPUSH（cs）
+		push	eax				; far-CALLのためにPUSH（eip）
+		call	far [esp]		; アプリを呼び出す
+
+;	アプリが終了するとここに帰ってくる
+
+		mov		eax,1*8			; OS用のDS/SS
+		cli			; また切り替えるので割り込み禁止
+		mov		es,ax
+		mov		ss,ax
+		mov		ds,ax
+		mov		fs,ax
+		mov		gs,ax
+		mov		esp,[0xfe4]
+		sti		; 切り替え完了なので割り込み可能に戻す
+		popad	; 保存しておいたレジスタを回復
+		ret
