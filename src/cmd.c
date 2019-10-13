@@ -236,6 +236,9 @@ int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int e
 		cons_putchar(cons, eax & 0xff, 1);
 	}else if(edx == 2){
 		cons_putstr0(cons, (char *) ebx + cs_base);
+		char s[12];
+		sprint(s, "%x\n", ebx);
+		cons_putstr0(cons, s);
 	}else if(edx == 3){
 		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
 	}

@@ -14,11 +14,14 @@ default :
 %.asm : %.nas Makefile
 	\cat $*.nas > $*.asm
 
-%.bin : %.asm Makefile
-	nasm $*.asm -o $*.bin -l $*.lst
+%.s : %.asm Makefile
+	\cat $*.asm > $*.s
 
-nasmfunc.o : nasmfunc.asm Makefile
-	nasm -g -f elf nasmfunc.asm -o nasmfunc.o
+%.bin : %.s Makefile
+	nasm $*.s -o $*.bin -l $*.lst
+
+nasmfunc.o : nasmfunc.s Makefile
+	nasm -g -f elf nasmfunc.s -o nasmfunc.o
 
 convert_hankaku.o : convert_hankaku.c Makefile
 	gcc convert_hankaku.c -o convert_hankaku.o
@@ -31,8 +34,8 @@ bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Mak
 	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c sheet.c timer.c \
 	taskfunc.c mtask.c cmd.c mss_libc32.c file.c exception.c nasmfunc.o -o bootpack.o
 
-a.o : a_nasm.asm Makefile
-	nasm -g -f elf a_nasm.asm -o a.o
+a.o : a_nasm.s Makefile
+	nasm -g -f elf a_nasm.s -o a.o
 
 app.o : a.c a.o Makefile
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g a.c a.o -o app.o
@@ -41,10 +44,10 @@ crack1.o : crack1.c a.o Makefile
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g crack1.c a.o -o crack1.o
 
 hello3.o : hello3.c a.o Makefile
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g hello3.c a.o -o hello3.o
+	gcc -Wl,-Map=hello3.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g hello3.c a.o -o hello3.o
 
 bug1.o :
-	gcc -Wl,-Map=bug1.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bug1.c a.o -o bug1.o
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bug1.c a.o -o bug1.o
 
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
@@ -78,7 +81,7 @@ clean :
 	-$(DEL) *.lst
 	-$(DEL)	*.o
 	-$(DEL) *.img
-	-$(DEL) bootpack.map
+	-$(DEL) *.map
 	-$(DEL) os.sys
 	-$(DEL)	hankaku.c
 
