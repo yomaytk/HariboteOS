@@ -31,6 +31,7 @@ void asm_inthandler27();
 void asm_inthandler2c();
 void asm_inthandler20();
 void asm_inthandler0d();
+void asm_inthandler0c();
 void asm_cons_putchar();
 void asm_os_api();
 unsigned int memtest_sub(unsigned int start, unsigned int end);
@@ -39,6 +40,7 @@ void mts_fin();
 void farjmp(int eip, int cs);
 void farcall(int eip, int cs);
 void start_app(int eip, int cs, int esp, int ds, int *esp0);
+void asm_end_app();
 
 /*===== dsctbl.c =====*/
 
@@ -351,3 +353,4 @@ struct FILEINFO *file_search(char cmdline[]);
 /* ===== exception.c ===== */
 
 int *inthandler0d(int *esp);
+int *inthandler0c(int *esp);

@@ -8,18 +8,20 @@
 		global	load_gdtr, load_idtr
 		global	asm_inthandler21, asm_inthandler27, asm_inthandler2c
 		global  asm_inthandler20
-		global 	asm_inthandler0d
+		global 	asm_inthandler0d	; general protected exception
+		global 	asm_inthandler0c	; stack exception
 		global	load_cr0, store_cr0
 		global  load_tr
 		global	farjmp, farcall
 		global  start_app
 		global	memtest_sub, mts_loop, mts_fin
 		extern	inthandler21, inthandler27, inthandler2c, inthandler20
-		extern 	inthandler0d
+		extern 	inthandler0d, inthandler0c
 		global	asm_cons_putchar
 		extern 	cons_putchar
 		global	asm_os_api
 		extern  os_api
+		global 	asm_end_app
 
 
 section .text
@@ -191,7 +193,27 @@ asm_inthandler0d:
 		mov		es, ax
 		call	inthandler0d
 		cmp 	eax, 0
-		jne 	end_app
+		jne 	asm_end_app
+		pop 	eax
+		popad
+		pop		ds
+		pop		es
+		add 	esp, 4
+		iretd
+
+asm_inthandler0c:
+		sti
+		push	es
+		push	ds
+		pushad
+		mov 	eax, esp
+		push 	eax
+		mov		ax, ss
+		mov		ds, ax
+		mov		es, ax
+		call	inthandler0c
+		cmp 	eax, 0
+		jne 	asm_end_app
 		pop 	eax
 		popad
 		pop		ds
@@ -253,15 +275,17 @@ asm_os_api:
 		mov		ds, ax
 		call	os_api
 		cmp 	eax, 0
-		jne 	end_app
+		jne 	asm_end_app
 		add 	esp, 32
 		popad
 		pop		es
 		pop		ds
 		iretd		; sti automatically by this order
-end_app:
+
+asm_end_app:
 		;jmp 	hlt_loop
 		mov 	esp, [eax]
+		mov 	dword [eax+4], 0
 		popad
 		ret 	; back to app_exe
 

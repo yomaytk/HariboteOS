@@ -169,6 +169,13 @@ void main(){
 					}
 					sheet_refresh(sht_win,  0, 0, sht_win->bxsize,  21);
 					sheet_refresh(sht_cons, 0, 0, sht_cons->bxsize, 21);
+				}else if(data == 256 + 0x3b && key_shift != 0 && task_cons->tss.ss0 != 0){ /* shift + F1*/
+					struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
+					cons_putstr0(cons, "\nBreak(key) :\n");
+					io_cli();
+					task_cons->tss.eax = (int) &(task_cons->tss.esp0);
+					task_cons->tss.eip = (int) asm_end_app;
+					io_sti();
 				}else if(data == 256 + 0x1c){
 					if(key_to != 0){
 						fifo32_put(&task_cons->fifo, 10 + 256);

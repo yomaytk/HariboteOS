@@ -1,0 +1,11 @@
+     1                                  [bits 32]
+     2                                  
+     3 00000000 BB[0E000000]            		mov 	ebx, inf_msg
+     4                                  
+     5                                  put_loop:
+     6 00000005 BA02000000              		mov 	edx, 2
+     7 0000000A CD40                    		int 	0x40
+     8 0000000C EBF7                    		jmp 	put_loop
+     9                                  
+    10                                  inf_msg:
+    11 0000000E 6100                    		db 		"a", 0
