@@ -180,6 +180,7 @@ asm_inthandler2c:
 		iretd
 
 asm_inthandler0d:
+		sti
 		push	es
 		push	ds
 		pushad
@@ -241,25 +242,12 @@ farcall:	; void farcall(int eip, int cs)
 		call 	far[esp+4]
 		ret
 
-asm_cons_putchar:
-		sti
-		pushad
-		push	1
-		; MOV		eax, 100
-		and 	eax, 0xff
-		push 	eax
-		push 	DWORD [0x0fec]
-		call 	cons_putchar
-		add 	esp, 12
-		popad
-		iretd
-
 asm_os_api:
 		sti
 		push	ds
 		push	es
 		pushad		; push for saving
-		pushad 		; push for use at os_api
+		pushad 		; push for using at os_api
 		mov 	ax, ss
 		mov		es, ax
 		mov		ds, ax
@@ -272,9 +260,14 @@ asm_os_api:
 		pop		ds
 		iretd		; sti automatically by this order
 end_app:
+		;jmp 	hlt_loop
 		mov 	esp, [eax]
-		pushad
+		popad
 		ret 	; back to app_exe
+
+hlt_loop:
+		hlt
+		jmp 	hlt_loop
 
 start_app:		; void start_app(int eip, int cs, int esp, int ds, int tss.esp0);
 		pushad		; save all 32bit register
@@ -289,10 +282,9 @@ start_app:		; void start_app(int eip, int cs, int esp, int ds, int tss.esp0);
 		mov		ds, bx
 		mov		fs, bx
 		mov		gs, bx
-		mov		esp, edx
 ; adjustment stack retf to application
 		or 		ecx, 3	; set priviledge level 3 for segment of application ??? 
-		or 		ecx, 3	; same above
+		or 		ebx, 3	; same above
 		push 	ebx
 		push 	edx
 		push 	ecx

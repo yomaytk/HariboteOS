@@ -1,7 +1,7 @@
 
 破棄された入力セクション
 
- .eh_frame      0x0000000000000000       0x44 /tmp/ccQrwJJo.o
+ .eh_frame      0x0000000000000000       0x44 /tmp/ccEKDMSz.o
 
 メモリ設定
 
@@ -10,7 +10,7 @@
 
 リンカスクリプトおよびメモリマップ
 
-LOAD /tmp/ccQrwJJo.o
+LOAD /tmp/ccEKDMSz.o
 LOAD a.o
 
 .head           0x0000000000000000       0x24
@@ -26,7 +26,7 @@ LOAD a.o
 
 .text           0x0000000000000030       0x73
  *(.text)
- .text          0x0000000000000030       0x60 /tmp/ccQrwJJo.o
+ .text          0x0000000000000030       0x60 /tmp/ccEKDMSz.o
                 0x0000000000000030                main
  .text          0x0000000000000090       0x13 a.o
                 0x0000000000000090                api_putchar
@@ -34,38 +34,38 @@ LOAD a.o
 
 .data           0x0000000000310000        0x0 ロードアドレス 0x00000000000000a3
  *(.data)
- .data          0x0000000000310000        0x0 /tmp/ccQrwJJo.o
+ .data          0x0000000000310000        0x0 /tmp/ccEKDMSz.o
  *(.rodata*)
  *(.bss)
- .bss           0x0000000000310000        0x0 /tmp/ccQrwJJo.o
+ .bss           0x0000000000310000        0x0 /tmp/ccEKDMSz.o
 
 /DISCARD/
  *(.eh_frame)
 OUTPUT(hello3.o binary)
 
 .debug_info     0x0000000000000000       0x37
- .debug_info    0x0000000000000000       0x37 /tmp/ccQrwJJo.o
+ .debug_info    0x0000000000000000       0x37 /tmp/ccEKDMSz.o
 
 .debug_abbrev   0x0000000000000000       0x2a
- .debug_abbrev  0x0000000000000000       0x2a /tmp/ccQrwJJo.o
+ .debug_abbrev  0x0000000000000000       0x2a /tmp/ccEKDMSz.o
 
 .debug_aranges  0x0000000000000000       0x20
  .debug_aranges
-                0x0000000000000000       0x20 /tmp/ccQrwJJo.o
+                0x0000000000000000       0x20 /tmp/ccEKDMSz.o
 
 .debug_line     0x0000000000000000       0x3e
- .debug_line    0x0000000000000000       0x3e /tmp/ccQrwJJo.o
+ .debug_line    0x0000000000000000       0x3e /tmp/ccEKDMSz.o
 
 .debug_str      0x0000000000000000       0x63
- .debug_str     0x0000000000000000       0x63 /tmp/ccQrwJJo.o
+ .debug_str     0x0000000000000000       0x63 /tmp/ccEKDMSz.o
 
 .comment        0x0000000000000000       0x2c
- .comment       0x0000000000000000       0x2c /tmp/ccQrwJJo.o
+ .comment       0x0000000000000000       0x2c /tmp/ccEKDMSz.o
 
 .note.GNU-stack
                 0x0000000000000000        0x0
  .note.GNU-stack
-                0x0000000000000000        0x0 /tmp/ccQrwJJo.o
+                0x0000000000000000        0x0 /tmp/ccEKDMSz.o
 
 .stab           0x0000000000000000       0x6c
  .stab          0x0000000000000000       0x6c a.o
