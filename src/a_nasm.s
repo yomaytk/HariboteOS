@@ -1,8 +1,8 @@
 [bits 32]
 
 		global 	api_putchar
-		global  api_end
 		global 	api_putstr0
+		global  api_end
 
 section .text
 

@@ -29,8 +29,8 @@ convert_hankaku.o : convert_hankaku.c Makefile
 hankaku.c : convert_hankaku.o hankaku.txt Makefile
 	./convert_hankaku.o
 
-bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c har.ld nasmfunc.o Makefile
-	gcc -Wl,-Map=bootpack.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bootpack.c hankaku.c \
+bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c os.ld nasmfunc.o Makefile
+	gcc -Wl,-Map=bootpack.map -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g bootpack.c hankaku.c \
 	graphic.c dsctbl.c int.c fifo.c kbc.c mouse.c memory.c sheet.c timer.c \
 	taskfunc.c mtask.c cmd.c mss_libc32.c file.c exception.c nasmfunc.o -o bootpack.o
 
@@ -38,16 +38,16 @@ a.o : a_nasm.s Makefile
 	nasm -g -f elf a_nasm.s -o a.o
 
 app.o : a.c a.o Makefile
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g a.c a.o -o app.o
+	gcc -Wl,-Map=app.map -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g a.c a.o -o app.o
 
 crack1.o : crack1.c a.o Makefile
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g crack1.c a.o -o crack1.o
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g crack1.c a.o -o crack1.o
 
 hello3.o : hello3.c a.o Makefile
-	gcc -Wl,-Map=hello3.map -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g hello3.c a.o -o hello3.o
+	gcc -Wl,-Map=hello3.map -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g hello3.c a.o -o hello3.o
 
 bug1.o :
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T har.ld -g bug1.c a.o -o bug1.o
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g bug1.c a.o -o bug1.o
 
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys

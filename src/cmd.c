@@ -185,20 +185,27 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 	}
 
 	if (finfo != 0) {
-		/* file can finding */
+		/* can find file */
 		char *p = (char *) memman_alloc_4k(memman, finfo->size);
-		char *q = (char *) memman_alloc_4k(memman, 64*1024);
-		*((int *) 0x0fe8) = (int) p;
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
-		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER + 0x60);
-		set_segmdesc(gdt + 1004, 64*1024 - 1, (int) q, AR_DATA32_RW + 0x60);
-		if(finfo->size >= 8 && strcomp((p+4), "main", 4, 4) == 0){
-			start_app(0x1b, 1003*8, 64*1024, 1004*8, &(task->tss.esp0));			
+		if(finfo->size >= 8 && strcomp((p+4), "main", 4, 4) == 0 && *p == 0x00){
+			int segment_size = *((int *) (p + 0x0000));	/* data segment size of application */
+			int data_start = *((int *) (p + 0x0014));		/* data start address of application */
+			int esp = *((int *) (p + 0x000c));			/* start address of stack and assigned data start address */
+			int data_size = *((int *) (p + 0x0010));
+			char *q = (char *) memman_alloc_4k(memman, segment_size);
+			*((int *) 0x0fe8) = (int) q;
+			set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER + 0x60);			
+			set_segmdesc(gdt + 1004, segment_size - 1, (int) q, AR_DATA32_RW + 0x60);			
+			for(int i = 0;i < data_size;i++){
+				q[esp + i] = p[data_start + i];
+			}
+			start_app(0x1b, 1003*8, esp, 1004*8, &(task->tss.esp0));
+			memman_free_4k(memman, (int) q, segment_size);
 		}else{
-			start_app(0, 1003*8, 64*1024, 1004*8, &(task->tss.esp0));
+			cons_putstr0(cons, ".o or .bin file format error.\n");
 		}
 		memman_free_4k(memman, (int) p, finfo->size);
-		memman_free_4k(memman, (int) q, 64*1024);
 		cons_newline(cons);
 		return 1;
 	}
@@ -236,9 +243,6 @@ int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int e
 		cons_putchar(cons, eax & 0xff, 1);
 	}else if(edx == 2){
 		cons_putstr0(cons, (char *) ebx + cs_base);
-		char s[12];
-		sprint(s, "%x\n", ebx);
-		cons_putstr0(cons, s);
 	}else if(edx == 3){
 		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
 	}
