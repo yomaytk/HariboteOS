@@ -59,6 +59,7 @@ void main(){
 	
 	init_palette();		// color palette settings
 	shtctl = shtctl_init(memman, binfo->vram, binfo->scrnx, binfo->scrny);
+	*((int *) 0x0fe4) = (int) shtctl;
 	task_a = task_init(memman);
 	fifo.task = task_a;
 	task_run(task_a, 1, 0);

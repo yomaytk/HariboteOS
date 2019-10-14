@@ -188,6 +188,7 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 		/* can find file */
 		char *p = (char *) memman_alloc_4k(memman, finfo->size);
 		file_loadfile(finfo->clustno, finfo->size, p, fat, (char *) (ADR_DISKIMG + 0x003e00));
+		set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER + 0x60);			
 		if(finfo->size >= 8 && strcomp((p+4), "main", 4, 4) == 0 && *p == 0x00){
 			int segment_size = *((int *) (p + 0x0000));	/* data segment size of application */
 			int data_start = *((int *) (p + 0x0014));		/* data start address of application */
@@ -195,7 +196,6 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 			int data_size = *((int *) (p + 0x0010));
 			char *q = (char *) memman_alloc_4k(memman, segment_size);
 			*((int *) 0x0fe8) = (int) q;
-			set_segmdesc(gdt + 1003, finfo->size - 1, (int) p, AR_CODE32_ER + 0x60);			
 			set_segmdesc(gdt + 1004, segment_size - 1, (int) q, AR_DATA32_RW + 0x60);			
 			for(int i = 0;i < data_size;i++){
 				q[esp + i] = p[data_start + i];
@@ -203,7 +203,12 @@ int app_exe(struct CONSOLE *cons, int *fat, char cmdline[], int cmdsize){
 			start_app(0x1b, 1003*8, esp, 1004*8, &(task->tss.esp0));
 			memman_free_4k(memman, (int) q, segment_size);
 		}else{
-			cons_putstr0(cons, ".o or .bin file format error.\n");
+			// cons_putstr0(cons, "*.o or *.bin file format error.\n");
+			char *q = (char *) memman_alloc_4k(memman, 16*1024);
+			*((int *) 0xfe8) = (int) p;
+			set_segmdesc(gdt + 1004, 16*1024 - 1, (int) q, AR_DATA32_RW + 0x60);						
+			start_app(0x00, 1003*8, 16*1024, 1004*8, &(task->tss.esp0));
+			memman_free_4k(memman, (int) q, 64*1024);
 		}
 		memman_free_4k(memman, (int) p, finfo->size);
 		cons_newline(cons);
@@ -235,19 +240,36 @@ void command_set(struct CONSOLE *cons, char cmdline[], char cmd_size, unsigned i
 
 int *os_api(int edi, int esi, int ebp, int esp, int ebx, int edx, int ecx, int eax){
 	
-	int cs_base = *((int *) 0x0fe8);
+	int ds_base = *((int *) 0x0fe8);
 	struct CONSOLE *cons = (struct CONSOLE *) *((int *) 0x0fec);
 	struct TASK *task = task_now();
+	struct SHTCTL *shtctl = (struct SHTCTL *) *((int *) 0x0fe4);
+	struct SHEET *sht;
+	int *reg = &eax + 1;	/* start address of register be using for saving register on stack */
 
 	if(edx == 1){
 		cons_putchar(cons, eax & 0xff, 1);
 	}else if(edx == 2){
-		cons_putstr0(cons, (char *) ebx + cs_base);
+		cons_putstr0(cons, (char *) ebx + ds_base);
 	}else if(edx == 3){
-		cons_putstr1(cons, (char *) ebx + cs_base, ecx);
-	}
-	else if(edx == 4){
+		cons_putstr1(cons, (char *) ebx + ds_base, ecx);
+	}else if(edx == 4){
 		return &(task->tss.esp0);
+	}else if(edx == 5){
+		sht = sheet_alloc(shtctl);
+		sheet_setbuf(sht, (char *) ebx + ds_base, esi, edi, eax);
+		make_window8((char *) ebx + ds_base, esi, edi, (char *) ecx + ds_base, 0);
+		sheet_slide(sht, 100, 50);
+		sheet_updown(sht, 3);
+		reg[7] = (int) sht;	/* eax register */
+	}else if (edx == 6) {
+		sht = (struct SHEET *) ebx;
+		putfonts8_asc(sht->buf, sht->bxsize, esi, edi, eax, (char *) ebp + ds_base);
+		sheet_refresh(sht, esi, edi, esi + ecx * 8, edi + 16);
+	} else if (edx == 7) {
+		sht = (struct SHEET *) ebx;
+		boxfill8(sht->buf, sht->bxsize, ebp, eax, ecx, esi, edi);
+		sheet_refresh(sht, eax, ecx, esi + 1, edi + 1);
 	}
 
 	return 0;
