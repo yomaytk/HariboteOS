@@ -1,5 +1,0 @@
-     1                                  [bits 32]
-     2                                  
-     3                                  nop_loop:
-     4 00000000 90                      	nop
-     5 00000001 EBFD                    	jmp 	nop_loop

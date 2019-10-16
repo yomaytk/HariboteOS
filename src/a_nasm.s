@@ -5,6 +5,9 @@
 		global	api_openwin
 		global	api_putstrwin
 		global 	api_boxfillwin
+		global  api_initmalloc
+		global  api_malloc
+		global 	api_free
 		global  api_end
 
 section .text
@@ -65,6 +68,53 @@ api_boxfillwin:	; api_boxfillwin(int win_num, int x0, int y0, int x1, int y1, in
 		mov 	ebp, [esp+56]
 		int 	0x40
 		popad
+		ret
+
+api_initmalloc:
+		push 	edx
+		push 	ebx
+		push 	eax
+		push 	ecx
+		mov 	edx, 8
+		mov 	ebx, [cs:0x0020]
+		mov 	eax, ebx
+		add 	eax, 32*1024		; allock 32KB for struct memman on data segment
+		mov 	ecx, [cs:0x0000]	; size data segment
+		sub 	ecx, 32*1024
+		int 	0x40
+		pop 	ecx
+		pop 	eax
+		pop 	ebx
+		pop  	edx
+		ret
+
+api_malloc:
+		push 	edx
+		push 	ebx
+		push 	ecx
+		mov 	edx, 9
+		mov 	ebx, [cs:0x0020]
+		mov 	ecx, [esp+16]
+		int 	0x40
+		pop 	edx
+		pop 	ebx
+		pop 	ecx
+		ret
+
+api_free:
+		push 	edx
+		push 	ebx
+		push 	eax
+		push 	ecx
+		mov 	edx, 10
+		mov 	ebx, [cs:0x0020]
+		mov 	eax, [esp+20]		; start address for free area
+		mov 	ecx, [esp+24]		; size of free area
+		int 	0x40
+		pop		edx
+		pop 	ebx
+		pop 	eax
+		pop 	ecx
 		ret
 
 api_end:

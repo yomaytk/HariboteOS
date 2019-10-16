@@ -151,6 +151,7 @@ struct FREEINFO {	/* ‚ ‚«î•ñ */
 	unsigned int addr, size;
 };
 
+/* memman size is 32KB */
 struct MEMMAN {		/* ƒƒ‚ƒŠŠÇ— */
 	int frees, maxfrees, lostsize, losts;
 	struct FREEINFO free[MEMMAN_FREES];

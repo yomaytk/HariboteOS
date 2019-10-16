@@ -52,18 +52,20 @@ bug1.o :
 win_hel.o :
 	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g win_hello.c a.o -o win_hel.o
 
+win_hel2.o :
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g win_hel2.c a.o -o win_hel2.o
+
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
 
-os.img : ipl10.bin os.sys hello2.bin app.o hello3.o bug2.bin bug3.bin win_hel.o Makefile
+os.img : ipl10.bin os.sys hello2.bin app.o hello3.o win_hel.o win_hel2.o Makefile
 	mformat -f 1440 -C -B ipl10.bin -i os.img ::
 	mcopy os.sys -i os.img ::
 	mcopy hello2.bin -i os.img ::
 	mcopy app.o -i os.img ::
 	mcopy hello3.o -i os.img ::
-	mcopy bug2.bin -i os.img ::
-	mcopy bug3.bin -i os.img ::
 	mcopy win_hel.o -i os.img ::
+	mcopy win_hel2.o -i os.img ::
 
 img :
 	$(MAKE) os.img

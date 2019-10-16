@@ -1,7 +1,7 @@
 
 破棄された入力セクション
 
- .eh_frame      0x0000000000000000       0x44 /tmp/cc7QGafK.o
+ .eh_frame      0x0000000000000000       0x44 /tmp/ccJ9tidJ.o
 
 メモリ設定
 
@@ -10,7 +10,7 @@
 
 リンカスクリプトおよびメモリマップ
 
-LOAD /tmp/cc7QGafK.o
+LOAD /tmp/ccJ9tidJ.o
 LOAD a.o
 
 .head           0x0000000000000000       0x24
@@ -19,61 +19,64 @@ LOAD a.o
                 0x0000000000000008        0x4 LONG 0x0
                 0x000000000000000c        0x4 LONG 0x310000
                 0x0000000000000010        0x4 LONG 0x0 SIZEOF (.data)
-                0x0000000000000014        0x4 LONG 0x109 LOADADDR (.data)
+                0x0000000000000014        0x4 LONG 0x16c LOADADDR (.data)
                 0x0000000000000018        0x4 LONG 0xe9000000
                 0x000000000000001c        0x4 LONG 0x10 (main - 0x20)
                 0x0000000000000020        0x4 LONG 0x0
 
-.text           0x0000000000000030       0xd9
+.text           0x0000000000000030      0x13c
  *(.text)
- .text          0x0000000000000030       0x46 /tmp/cc7QGafK.o
+ .text          0x0000000000000030       0x46 /tmp/ccJ9tidJ.o
                 0x0000000000000030                main
  *fill*         0x0000000000000076        0xa 
- .text          0x0000000000000080       0x89 a.o
+ .text          0x0000000000000080       0xec a.o
                 0x0000000000000080                api_putchar
                 0x000000000000008c                api_putstr0
                 0x000000000000009a                api_openwin
                 0x00000000000000be                api_putstrwin
                 0x00000000000000e0                api_boxfillwin
-                0x0000000000000102                api_end
+                0x0000000000000102                api_initmalloc
+                0x000000000000012d                api_malloc
+                0x0000000000000146                api_free
+                0x0000000000000165                api_end
 
-.data           0x0000000000310000        0x0 ロードアドレス 0x0000000000000109
+.data           0x0000000000310000        0x0 ロードアドレス 0x000000000000016c
  *(.data)
- .data          0x0000000000310000        0x0 /tmp/cc7QGafK.o
+ .data          0x0000000000310000        0x0 /tmp/ccJ9tidJ.o
  *(.rodata*)
  *(.bss)
- .bss           0x0000000000310000        0x0 /tmp/cc7QGafK.o
+ .bss           0x0000000000310000        0x0 /tmp/ccJ9tidJ.o
 
 /DISCARD/
  *(.eh_frame)
 OUTPUT(app.o binary)
 
 .debug_info     0x0000000000000000      0x322
- .debug_info    0x0000000000000000      0x322 /tmp/cc7QGafK.o
+ .debug_info    0x0000000000000000      0x322 /tmp/ccJ9tidJ.o
 
 .debug_abbrev   0x0000000000000000       0xde
- .debug_abbrev  0x0000000000000000       0xde /tmp/cc7QGafK.o
+ .debug_abbrev  0x0000000000000000       0xde /tmp/ccJ9tidJ.o
 
 .debug_aranges  0x0000000000000000       0x20
  .debug_aranges
-                0x0000000000000000       0x20 /tmp/cc7QGafK.o
+                0x0000000000000000       0x20 /tmp/ccJ9tidJ.o
 
 .debug_line     0x0000000000000000       0xbc
- .debug_line    0x0000000000000000       0xbc /tmp/cc7QGafK.o
+ .debug_line    0x0000000000000000       0xbc /tmp/ccJ9tidJ.o
 
 .debug_str      0x0000000000000000      0x2ca
- .debug_str     0x0000000000000000      0x2ca /tmp/cc7QGafK.o
+ .debug_str     0x0000000000000000      0x2ca /tmp/ccJ9tidJ.o
 
 .comment        0x0000000000000000       0x2c
- .comment       0x0000000000000000       0x2c /tmp/cc7QGafK.o
+ .comment       0x0000000000000000       0x2c /tmp/ccJ9tidJ.o
 
 .note.GNU-stack
                 0x0000000000000000        0x0
  .note.GNU-stack
-                0x0000000000000000        0x0 /tmp/cc7QGafK.o
+                0x0000000000000000        0x0 /tmp/ccJ9tidJ.o
 
-.stab           0x0000000000000000      0x27c
- .stab          0x0000000000000000      0x27c a.o
+.stab           0x0000000000000000      0x468
+ .stab          0x0000000000000000      0x468 a.o
 
 .stabstr        0x0000000000000000        0xa
  .stabstr       0x0000000000000000        0xa a.o
