@@ -37,35 +37,24 @@ bootpack.o : bootpack.c hankaku.c graphic.c dsctbl.c int.c os.ld nasmfunc.o Make
 a.o : a_nasm.s Makefile
 	nasm -g -f elf a_nasm.s -o a.o
 
-app.o : a.c a.o Makefile
-	gcc -Wl,-Map=app.map -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g a.c a.o -o app.o
+star1.o : star1.c a.o Makefile
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g star1.c a.o -o star1.o
 
-crack1.o : crack1.c a.o Makefile
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g crack1.c a.o -o crack1.o
+lines.o : lines.c a.o Makefile
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g lines.c a.o -o lines.o	
 
-hello3.o : hello3.c a.o Makefile
-	gcc -Wl,-Map=hello3.map -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g hello3.c a.o -o hello3.o
-
-bug1.o :
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g bug1.c a.o -o bug1.o
-
-win_hel.o :
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g win_hello.c a.o -o win_hel.o
-
-win_hel2.o :
-	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g win_hel2.c a.o -o win_hel2.o
+walk.o : walk.c a.o Makefile
+	gcc -fno-pic -march=i486 -m32 -nostdlib -T os.ld -g walk.c a.o -o walk.o	
 
 os.sys : asmhead.bin bootpack.o Makefile
 	\cat asmhead.bin bootpack.o > os.sys
 
-os.img : ipl10.bin os.sys hello2.bin app.o hello3.o win_hel.o win_hel2.o Makefile
+os.img : ipl10.bin os.sys star1.o lines.o walk.o Makefile
 	mformat -f 1440 -C -B ipl10.bin -i os.img ::
 	mcopy os.sys -i os.img ::
-	mcopy hello2.bin -i os.img ::
-	mcopy app.o -i os.img ::
-	mcopy hello3.o -i os.img ::
-	mcopy win_hel.o -i os.img ::
-	mcopy win_hel2.o -i os.img ::
+	mcopy star1.o -i os.img ::
+	mcopy lines.o -i os.img ::
+	mcopy walk.o -i os.img ::
 
 img :
 	$(MAKE) os.img

@@ -8,6 +8,11 @@
 		global  api_initmalloc
 		global  api_malloc
 		global 	api_free
+		global  api_point
+		global 	api_refreshwin
+		global 	api_linewin
+		global 	api_closewin
+		global 	api_getkey
 		global  api_end
 
 section .text
@@ -115,6 +120,74 @@ api_free:
 		pop 	ebx
 		pop 	eax
 		pop 	ecx
+		ret
+
+api_point:			; void api_point(int win, int x, int y, int col);
+		push 	edx
+		push 	ebx
+		push 	esi
+		push 	edi
+		push 	eax
+		mov 	edx, 11
+		mov 	ebx, [esp+24]
+		mov 	esi, [esp+28]
+		mov 	edi, [esp+32]
+		mov 	eax, [esp+36]
+		int 	0x40
+		pop 	eax
+		pop 	edi
+		pop 	esi
+		pop 	ebx
+		pop 	edx
+		ret
+
+api_refreshwin:
+		push 	edi
+		push 	esi
+		push 	ebx
+		mov 	edx, 12
+		mov 	ebx, [esp+16]
+		mov 	eax, [esp+20]
+		mov 	ecx, [esp+24]
+		mov 	esi, [esp+28]
+		mov 	edi, [esp+32]
+		int 	0x40
+		pop		ebx
+		pop 	esi
+		pop 	edi
+		ret
+
+api_linewin:		; api_linewin(int win, int x0, int y0, int x1, int y1, int col)
+		push 	edi
+		push 	esi
+		push 	ebp
+		push 	ebx
+		mov 	edx, 13
+		mov 	ebx, [esp+20]
+		mov 	eax, [esp+24]
+		mov 	ecx, [esp+28]
+		mov 	esi, [esp+32]
+		mov 	edi, [esp+36]
+		mov 	ebp, [esp+40]
+		int 	0x40
+		pop 	ebx
+		pop 	ebp
+		pop		esi
+		pop 	edi
+		ret
+
+api_closewin:
+		push 	ebx
+		mov 	edx, 14
+		mov 	ebx, [esp+8]
+		int 	0x40
+		pop 	ebx
+		ret
+
+api_getkey:
+		mov 	edx, 15
+		mov 	eax, [esp+4]
+		int 	0x40
 		ret
 
 api_end:

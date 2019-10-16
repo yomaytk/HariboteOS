@@ -174,6 +174,7 @@ struct SHEET {
 	unsigned char *buf;
 	int bxsize, bysize, vx0, vy0, col_inv, height, flags;
 	struct SHTCTL *ctl;
+	struct TASK *task;
 };
 struct SHTCTL {
 	unsigned char *vram, *map;
@@ -330,6 +331,7 @@ extern char keytable1[0x80];
 struct CONSOLE {
 	struct SHEET *sht;
 	int cur_x, cur_y, cur_c;
+	struct TIMER *timer;
 };
 
 void console_main(struct SHEET *sht_cons, unsigned int memtotal);
